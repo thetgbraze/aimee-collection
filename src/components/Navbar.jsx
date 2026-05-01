@@ -1,22 +1,27 @@
-import React from 'react';
-import { ShoppingBag, Search, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingBag, Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Navbar = ({ currency, setCurrency }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <header className="header">
       <div className="container flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button className="mobile-menu-btn icon-btn">
-            <Menu size={24} />
+          <button 
+            className="mobile-menu-btn icon-btn"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           
-          <nav className="nav-links">
-            <Link to="/new-arrivals" className="nav-link">New Arrivals</Link>
-            <Link to="/clothing" className="nav-link">Clothing</Link>
-            <Link to="/shoes" className="nav-link">Shoes</Link>
-            <Link to="/bags" className="nav-link">Bags</Link>
-            <Link to="/accessories" className="nav-link">Accessories</Link>
+          <nav className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}>
+            <Link to="/new-arrivals" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>New Arrivals</Link>
+            <Link to="/clothing" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Clothing</Link>
+            <Link to="/shoes" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Shoes</Link>
+            <Link to="/bags" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Bags</Link>
+            <Link to="/accessories" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Accessories</Link>
           </nav>
         </div>
 
