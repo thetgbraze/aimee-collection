@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const products = [
   // Clothing
@@ -38,25 +38,49 @@ const categories = ["All", "Clothing", "Shoes", "Bags", "Accessories"];
 
 const ProductGrid = ({ currency }) => {
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const pauseTimeoutRef = useRef(null);
 
   const activeCategory = categories[activeCategoryIndex];
 
+  // Auto-slide interval
   useEffect(() => {
     let intervalId;
-    
-    if (!isHovering) {
+    if (!isPaused) {
       intervalId = setInterval(() => {
         setActiveCategoryIndex((prevIndex) => (prevIndex + 1) % categories.length);
       }, 4000); // Change category every 4 seconds
     }
-
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [isHovering]);
+  }, [isPaused]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+    };
+  }, []);
+
+  const handleInteraction = () => {
+    setIsPaused(true);
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+    }
+    // Resume auto-sliding after 4 seconds of inactivity
+    pauseTimeoutRef.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 4000);
+  };
+
+  const handleMouseLeave = () => {
+    // If they leave the section entirely, resume immediately
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+    }
+    setIsPaused(false);
+  };
 
   const formatPrice = (usd, rwf) => {
     if (currency === 'RWF') {
@@ -72,8 +96,11 @@ const ProductGrid = ({ currency }) => {
   return (
     <section 
       className="section container"
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseMove={handleInteraction}
+      onTouchStart={handleInteraction}
+      onClick={handleInteraction}
+      onMouseEnter={handleInteraction}
+      onMouseLeave={handleMouseLeave}
     >
       <h2 className="section-title">New Arrivals</h2>
       
