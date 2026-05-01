@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import QuickViewModal from './QuickViewModal';
 
 const products = [
   // Clothing
@@ -10,7 +11,7 @@ const products = [
   { id: 6, title: "Velvet Evening Gown", priceUSD: 250, priceRWF: 325000, category: "Clothing", image: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=60" },
   
   // Bags
-  { id: 7, title: "Luxe Leather Tote", priceUSD: 210, priceRWF: 273000, category: "Bags", image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=800&q=60" },
+  { id: 7, title: "Luxe Leather Tote", priceUSD: 210, priceRWF: 273000, category: "Bags", image: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=800&q=60" },
   { id: 8, title: "Everyday Crossbody", priceUSD: 85, priceRWF: 110500, category: "Bags", image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=60" },
   { id: 9, title: "Mini Chain Evening Bag", priceUSD: 130, priceRWF: 169000, category: "Bags", image: "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&q=60" },
   { id: 10, title: "Structured Satchel", priceUSD: 150, priceRWF: 195000, category: "Bags", image: "https://images.unsplash.com/photo-1600857062241-98e5dba7f214?w=800&q=60" },
@@ -18,7 +19,7 @@ const products = [
   { id: 12, title: "Woven Summer Clutch", priceUSD: 65, priceRWF: 84500, category: "Bags", image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=60" },
 
   // Accessories
-  { id: 13, title: "Gold Layered Necklace", priceUSD: 95, priceRWF: 123500, category: "Accessories", image: "https://images.unsplash.com/photo-1599643478524-fb66f7ca065b?w=800&q=60" },
+  { id: 13, title: "Gold Layered Necklace", priceUSD: 95, priceRWF: 123500, category: "Accessories", image: "https://images.unsplash.com/photo-1515562141207-7a8ea4114e39?w=800&q=60" },
   { id: 14, title: "Classic Silver Watch", priceUSD: 120, priceRWF: 156000, category: "Accessories", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=60" },
   { id: 15, title: "Diamond Stud Earrings", priceUSD: 250, priceRWF: 325000, category: "Accessories", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=60" },
   { id: 16, title: "Vintage Sunglasses", priceUSD: 65, priceRWF: 84500, category: "Accessories", image: "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=800&q=60" },
@@ -39,6 +40,7 @@ const categories = ["All", "Clothing", "Shoes", "Bags", "Accessories"];
 const ProductGrid = ({ currency }) => {
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
   const pauseTimeoutRef = useRef(null);
 
   const activeCategory = categories[activeCategoryIndex];
@@ -46,7 +48,7 @@ const ProductGrid = ({ currency }) => {
   // Auto-slide interval
   useEffect(() => {
     let intervalId;
-    if (!isPaused) {
+    if (!isPaused && !quickViewProduct) {
       intervalId = setInterval(() => {
         setActiveCategoryIndex((prevIndex) => (prevIndex + 1) % categories.length);
       }, 4000); // Change category every 4 seconds
@@ -54,7 +56,7 @@ const ProductGrid = ({ currency }) => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isPaused]);
+  }, [isPaused, quickViewProduct]);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -64,6 +66,7 @@ const ProductGrid = ({ currency }) => {
   }, []);
 
   const handleInteraction = () => {
+    if (quickViewProduct) return;
     setIsPaused(true);
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
@@ -75,6 +78,7 @@ const ProductGrid = ({ currency }) => {
   };
 
   const handleMouseLeave = () => {
+    if (quickViewProduct) return;
     // If they leave the section entirely, resume immediately
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
@@ -94,45 +98,65 @@ const ProductGrid = ({ currency }) => {
     : products.filter(p => p.category === activeCategory);
 
   return (
-    <section 
-      className="section container"
-      onMouseMove={handleInteraction}
-      onTouchStart={handleInteraction}
-      onClick={handleInteraction}
-      onMouseEnter={handleInteraction}
-      onMouseLeave={handleMouseLeave}
-    >
-      <h2 className="section-title">New Arrivals</h2>
-      
-      <div className="category-tabs">
-        {categories.map((category, index) => (
-          <button 
-            key={category}
-            className={`category-tab ${activeCategory === category ? 'active' : ''}`}
-            onClick={() => setActiveCategoryIndex(index)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+    <>
+      <section 
+        className="section container"
+        onMouseMove={handleInteraction}
+        onTouchStart={handleInteraction}
+        onClick={handleInteraction}
+        onMouseEnter={handleInteraction}
+        onMouseLeave={handleMouseLeave}
+      >
+        <h2 className="section-title">New Arrivals</h2>
+        
+        <div className="category-tabs">
+          {categories.map((category, index) => (
+            <button 
+              key={category}
+              className={`category-tab ${activeCategory === category ? 'active' : ''}`}
+              onClick={() => setActiveCategoryIndex(index)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
 
-      <div className="product-grid">
-        {filteredProducts.map((product) => (
-          <div key={product.id} className="product-card">
-            <div className="product-image-container">
-              <img src={product.image} alt={product.title} className="product-image" loading="lazy" />
-              <div className="product-actions">
-                <button className="btn btn-primary" style={{ width: '100%' }}>Quick View</button>
+        <div className="product-grid">
+          {filteredProducts.map((product) => (
+            <div key={product.id} className="product-card">
+              <div className="product-image-container">
+                <img src={product.image} alt={product.title} className="product-image" loading="lazy" />
+                <div className="product-actions">
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ width: '100%' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setQuickViewProduct(product);
+                    }}
+                  >
+                    Quick View
+                  </button>
+                </div>
+              </div>
+              <div className="product-info">
+                <h3 className="product-title">{product.title}</h3>
+                <p className="product-price">{formatPrice(product.priceUSD, product.priceRWF)}</p>
               </div>
             </div>
-            <div className="product-info">
-              <h3 className="product-title">{product.title}</h3>
-              <p className="product-price">{formatPrice(product.priceUSD, product.priceRWF)}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+          ))}
+        </div>
+      </section>
+
+      {quickViewProduct && (
+        <QuickViewModal 
+          product={quickViewProduct} 
+          currency={currency} 
+          formatPrice={formatPrice} 
+          onClose={() => setQuickViewProduct(null)} 
+        />
+      )}
+    </>
   );
 };
 

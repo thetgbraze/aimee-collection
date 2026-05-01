@@ -455,3 +455,195 @@ img {
   color: #a0a0a0;
   font-size: 0.9rem;
 }
+
+/* Quick View Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    flex-direction: column;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  z-index: 10;
+}
+
+.modal-left {
+  flex: 1;
+  position: relative;
+  background-color: #f7f7f7;
+}
+
+.modal-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 3/4;
+}
+
+.modal-right {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.modal-price {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.size-selector {
+  margin-bottom: 2rem;
+}
+
+.size-selector h4 {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  text-transform: lowercase;
+  margin-bottom: 10px;
+  font-weight: normal;
+}
+
+.size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.size-btn {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  background: white;
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.size-btn:hover, .size-btn.active {
+  border-color: var(--primary-color);
+}
+
+.action-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 1.5rem;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+}
+
+.qty-btn {
+  padding: 10px 15px;
+  background: white;
+  border: none;
+  font-size: 1.2rem;
+}
+
+.qty-input {
+  width: 40px;
+  text-align: center;
+  border: none;
+  font-size: 1rem;
+}
+
+.add-cart-btn {
+  flex: 1;
+  background: #999;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.add-cart-btn:hover {
+  background: var(--primary-color);
+}
+
+.wishlist-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 2rem;
+}
+
+.wishlist-btn {
+  flex: 1;
+  border: 1px solid #ddd;
+  padding: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.wishlist-btn:hover {
+  border-color: #999;
+}
+
+.compare-btn {
+  border: 1px solid #ddd;
+  padding: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-meta {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.modal-meta p {
+  margin-bottom: 5px;
+}
+
+.modal-meta span {
+  color: #333;
+}
