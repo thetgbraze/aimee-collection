@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShoppingBag, Search, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Navbar = ({ currency, setCurrency }) => {
   return (
@@ -11,22 +12,22 @@ const Navbar = ({ currency, setCurrency }) => {
           </button>
           
           <nav className="nav-links">
-            <a href="#" className="nav-link">New Arrivals</a>
-            <a href="#" className="nav-link">Clothing</a>
-            <a href="#" className="nav-link">Shoes</a>
-            <a href="#" className="nav-link">Bags</a>
-            <a href="#" className="nav-link">Accessories</a>
+            <Link to="/new-arrivals" className="nav-link">New Arrivals</Link>
+            <Link to="/clothing" className="nav-link">Clothing</Link>
+            <Link to="/shoes" className="nav-link">Shoes</Link>
+            <Link to="/bags" className="nav-link">Bags</Link>
+            <Link to="/accessories" className="nav-link">Accessories</Link>
           </nav>
         </div>
 
         <div className="logo">
-          <a href="#">
+          <Link to="/">
             <img 
               src="/aimee_collection_logo_transparent.png" 
               alt="Aimee Collection Logo" 
               className="logo-img" 
             />
-          </a>
+          </Link>
         </div>
 
         <div className="header-actions">

@@ -167,7 +167,8 @@ img {
 }
 
 .logo-img {
-  height: 50px;
+  height: 90px;
+  max-height: 100%;
 }
 
 .header-actions {
