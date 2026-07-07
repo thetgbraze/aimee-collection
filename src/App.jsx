@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Hero from './components/Hero';
 import ProductGrid from './components/ProductGrid';
 import BestSellersSlider from './components/BestSellersSlider';
 import Footer from './components/Footer';
@@ -41,7 +40,6 @@ function App() {
         <Routes>
           <Route path="/" element={
             <>
-              <Hero />
               <BestSellersSlider currency={currency} showToast={showToast} />
               <ProductGrid currency={currency} showToast={showToast} />
             </>

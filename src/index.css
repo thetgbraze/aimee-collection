@@ -733,21 +733,43 @@ img {
 .best-sellers-slider {
   position: relative;
   overflow: hidden;
-  padding: 40px 0;
+  padding: 10px 0 40px;
   background-color: var(--bg-color);
-}
-.slider-track-container {
-  overflow: hidden;
-  width: 100%;
-  padding: 20px 0;
 }
 .slider-track {
   display: flex;
   gap: 2rem;
-  /* transition is handled by requestAnimationFrame in react */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+.slider-track::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 .slider-item {
   min-width: 280px;
   max-width: 280px;
   flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+.slider-nav {
+  display: flex;
+  gap: 1rem;
+}
+.slider-nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.slider-nav-btn:hover {
+  background: var(--primary-color);
+  color: white;
 }
