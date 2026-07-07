@@ -1,9 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ShoppingBag, Heart, ArrowRightLeft } from 'lucide-react';
 
-const QuickViewModal = ({ product, currency, formatPrice, onClose }) => {
+const MAX_QUANTITY = 99;
+
+const QuickViewModal = ({ product, currency, formatPrice, onClose, showToast }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('Small: UK 8-10');
+  const modalRef = useRef(null);
+
+  // Trap focus inside modal and handle Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    // Focus the modal on open
+    if (modalRef.current) {
+      modalRef.current.focus();
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
 
   if (!product) return null;
 
@@ -12,22 +36,51 @@ const QuickViewModal = ({ product, currency, formatPrice, onClose }) => {
   };
 
   const handleIncrease = () => {
-    setQuantity(quantity + 1);
+    if (quantity < MAX_QUANTITY) setQuantity(quantity + 1);
   };
 
+  const handleAddToCart = () => {
+    if (showToast) {
+      showToast(`Added ${quantity}× ${product.title} (${selectedSize}) to cart!`, 'success');
+    }
+  };
+
+  const handleAddToWishlist = () => {
+    if (showToast) {
+      showToast(`${product.title} added to wishlist ❤️`, 'success');
+    }
+  };
+
+  const handleCompare = () => {
+    if (showToast) {
+      showToast(`${product.title} added to comparison`, 'info');
+    }
+  };
+
+  const sizes = ['Small: UK 8-10', 'Medium: UK 12', 'Large: UK 14-16', 'Xtralarge: UK 18'];
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
+    <div 
+      className="modal-overlay" 
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Quick view: ${product.title}`}
+    >
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        ref={modalRef}
+        tabIndex={-1}
+      >
+        <button className="modal-close" onClick={onClose} aria-label="Close quick view">
           <X size={24} />
         </button>
         
         <div className="modal-left">
-          <div style={{ position: 'absolute', top: '15px', left: '15px', background: 'white', padding: '2px 8px', fontSize: '0.7rem', fontWeight: 'bold', letterSpacing: '1px' }}>
-            NEW
-          </div>
+          <div className="modal-badge">NEW</div>
           <img src={product.image} alt={product.title} className="modal-image" />
-          <div style={{ position: 'absolute', bottom: '0', width: '100%', background: 'rgba(219, 180, 180, 0.9)', color: 'white', textAlign: 'center', padding: '10px', fontSize: '0.9rem' }}>
+          <div className="modal-info-bar">
             More Product Info ⓘ
           </div>
         </div>
@@ -39,11 +92,12 @@ const QuickViewModal = ({ product, currency, formatPrice, onClose }) => {
           <div className="size-selector">
             <h4>size</h4>
             <div className="size-options">
-              {['Small: UK 8-10', 'Medium: UK 12', 'Large: UK 14-16', 'Xtralarge: UK 18'].map(size => (
+              {sizes.map(size => (
                 <button 
                   key={size}
                   className={`size-btn ${selectedSize === size ? 'active' : ''}`}
                   onClick={() => setSelectedSize(size)}
+                  aria-pressed={selectedSize === size}
                 >
                   {size}
                 </button>
@@ -53,21 +107,41 @@ const QuickViewModal = ({ product, currency, formatPrice, onClose }) => {
           
           <div className="action-row">
             <div className="quantity-selector">
-              <button className="qty-btn" onClick={handleDecrease}>−</button>
-              <input type="text" className="qty-input" value={quantity} readOnly />
-              <button className="qty-btn" onClick={handleIncrease}>+</button>
+              <button 
+                className="qty-btn" 
+                onClick={handleDecrease}
+                aria-label="Decrease quantity"
+                disabled={quantity <= 1}
+              >
+                −
+              </button>
+              <input 
+                type="text" 
+                className="qty-input" 
+                value={quantity} 
+                readOnly 
+                aria-label={`Quantity: ${quantity}`}
+              />
+              <button 
+                className="qty-btn" 
+                onClick={handleIncrease}
+                aria-label="Increase quantity"
+                disabled={quantity >= MAX_QUANTITY}
+              >
+                +
+              </button>
             </div>
             
-            <button className="add-cart-btn">
+            <button className="add-cart-btn" onClick={handleAddToCart}>
               Add To Cart <ShoppingBag size={18} />
             </button>
           </div>
           
           <div className="wishlist-row">
-            <button className="wishlist-btn">
+            <button className="wishlist-btn" onClick={handleAddToWishlist}>
               Add to wishlist <Heart size={18} />
             </button>
-            <button className="compare-btn">
+            <button className="compare-btn" onClick={handleCompare} aria-label="Compare product">
               <ArrowRightLeft size={18} />
             </button>
           </div>

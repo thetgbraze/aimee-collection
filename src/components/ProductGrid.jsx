@@ -37,26 +37,28 @@ const products = [
 
 const categories = ["All", "Clothing", "Shoes", "Bags", "Accessories"];
 
-const ProductGrid = ({ currency }) => {
-  const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+const ProductGrid = ({ currency, initialCategory, showToast }) => {
+  const initialIndex = initialCategory ? categories.indexOf(initialCategory) : 0;
+  const [activeCategoryIndex, setActiveCategoryIndex] = useState(initialIndex >= 0 ? initialIndex : 0);
+  const [isPaused, setIsPaused] = useState(!!initialCategory && initialCategory !== 'All');
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const pauseTimeoutRef = useRef(null);
 
   const activeCategory = categories[activeCategoryIndex];
 
-  // Auto-slide interval
+  // Auto-slide interval (disabled when initialCategory is set to a specific category)
   useEffect(() => {
     let intervalId;
-    if (!isPaused && !quickViewProduct) {
+    const shouldAutoSlide = !initialCategory || initialCategory === 'All';
+    if (!isPaused && !quickViewProduct && shouldAutoSlide) {
       intervalId = setInterval(() => {
         setActiveCategoryIndex((prevIndex) => (prevIndex + 1) % categories.length);
-      }, 4000); // Change category every 4 seconds
+      }, 4000);
     }
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isPaused, quickViewProduct]);
+  }, [isPaused, quickViewProduct, initialCategory]);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -66,20 +68,18 @@ const ProductGrid = ({ currency }) => {
   }, []);
 
   const handleInteraction = () => {
-    if (quickViewProduct) return;
+    if (quickViewProduct || (initialCategory && initialCategory !== 'All')) return;
     setIsPaused(true);
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
     }
-    // Resume auto-sliding after 4 seconds of inactivity
     pauseTimeoutRef.current = setTimeout(() => {
       setIsPaused(false);
     }, 4000);
   };
 
   const handleMouseLeave = () => {
-    if (quickViewProduct) return;
-    // If they leave the section entirely, resume immediately
+    if (quickViewProduct || (initialCategory && initialCategory !== 'All')) return;
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
     }
@@ -88,7 +88,11 @@ const ProductGrid = ({ currency }) => {
 
   const formatPrice = (usd, rwf) => {
     if (currency === 'RWF') {
-      return new Intl.NumberFormat('rw-RW', { style: 'currency', currency: 'RWF', maximumFractionDigits: 0 }).format(rwf);
+      try {
+        return new Intl.NumberFormat('en-RW', { style: 'currency', currency: 'RWF', maximumFractionDigits: 0 }).format(rwf);
+      } catch {
+        return `RWF ${rwf.toLocaleString()}`;
+      }
     }
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(usd);
   };
@@ -153,7 +157,8 @@ const ProductGrid = ({ currency }) => {
           product={quickViewProduct} 
           currency={currency} 
           formatPrice={formatPrice} 
-          onClose={() => setQuickViewProduct(null)} 
+          onClose={() => setQuickViewProduct(null)}
+          showToast={showToast}
         />
       )}
     </>

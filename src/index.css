@@ -323,7 +323,6 @@ img {
 }
 
 .product-card {
-  group: product;
   cursor: pointer;
 }
 
@@ -646,4 +645,84 @@ img {
 
 .modal-meta span {
   color: #333;
+}
+
+/* Page Placeholder */
+.page-placeholder {
+  padding: 60px 0;
+  min-height: 50vh;
+}
+
+.page-placeholder .section-title {
+  margin-top: 40px;
+}
+
+/* Modal Badge & Info Bar */
+.modal-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: white;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  z-index: 2;
+}
+
+.modal-info-bar {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: rgba(219, 180, 180, 0.9);
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Footer Description */
+.footer-description {
+  color: #a0a0a0;
+  font-size: 0.95rem;
+}
+
+.footer-newsletter-text {
+  color: #a0a0a0;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+/* Toast Notification */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--primary-color);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  z-index: 2000;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+  background: #2d6a4f;
+}
+
+.toast.info {
+  background: var(--accent-color);
+  color: var(--primary-color);
 }

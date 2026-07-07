@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 .DS_Store
+*.code-workspace
+check_images.sh
+test_more.sh
+test_new_images.sh
