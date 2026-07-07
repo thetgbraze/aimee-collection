@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ProductGrid from './components/ProductGrid';
+import BestSellersSlider from './components/BestSellersSlider';
 import Footer from './components/Footer';
 
 // Reusable Toast component for user feedback
@@ -41,6 +42,7 @@ function App() {
           <Route path="/" element={
             <>
               <Hero />
+              <BestSellersSlider currency={currency} showToast={showToast} />
               <ProductGrid currency={currency} showToast={showToast} />
             </>
           } />

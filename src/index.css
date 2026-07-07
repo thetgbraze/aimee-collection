@@ -187,14 +187,16 @@ img {
 }
 
 .logo-img {
-  height: 180px;
-  max-height: 100%;
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
   transition: var(--transition);
 }
 
 @media (max-width: 768px) {
   .logo-img {
-    height: 120px;
+    height: 45px;
   }
 }
 
@@ -725,4 +727,27 @@ img {
 .toast.info {
   background: var(--accent-color);
   color: var(--primary-color);
+}
+
+/* Best Sellers Slider */
+.best-sellers-slider {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 0;
+  background-color: var(--bg-color);
+}
+.slider-track-container {
+  overflow: hidden;
+  width: 100%;
+  padding: 20px 0;
+}
+.slider-track {
+  display: flex;
+  gap: 2rem;
+  /* transition is handled by requestAnimationFrame in react */
+}
+.slider-item {
+  min-width: 280px;
+  max-width: 280px;
+  flex: 0 0 auto;
 }
