@@ -754,15 +754,25 @@ img {
   scroll-snap-align: start;
 }
 .slider-nav {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 10;
+  padding: 0 10px;
 }
 .slider-nav-btn {
+  pointer-events: auto;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: white;
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--border-color);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: center;

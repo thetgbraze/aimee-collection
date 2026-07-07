@@ -15,10 +15,11 @@ const Toast = ({ message, type, visible }) => (
 // Sub-page wrapper with category filtering
 const PagePlaceholder = ({ title, category, currency, showToast }) => (
   <div className="page-placeholder">
-    <div className="container">
-      <h1 className="section-title">{title}</h1>
-      <ProductGrid currency={currency} initialCategory={category} showToast={showToast} />
+    <div className="container" style={{ paddingTop: '40px' }}>
+      <h1 className="section-title" style={{ textAlign: 'center', marginBottom: '2rem' }}>{title}</h1>
     </div>
+    <BestSellersSlider currency={currency} showToast={showToast} category={category} />
+    <ProductGrid currency={currency} initialCategory={category} showToast={showToast} />
   </div>
 );
 

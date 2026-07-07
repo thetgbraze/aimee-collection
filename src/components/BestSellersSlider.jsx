@@ -2,17 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { products, formatPrice } from '../data/products';
 import QuickViewModal from './QuickViewModal';
 
-const BestSellersSlider = ({ currency, showToast }) => {
+const BestSellersSlider = ({ currency, showToast, category }) => {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const trackRef = useRef(null);
 
-  const bestSellers = products.filter(p => p.isBestSeller);
+  const bestSellers = products.filter(p => p.isBestSeller && (!category || category === 'All' || p.category === category));
 
   // Auto-scroll logic
   useEffect(() => {
     let intervalId;
-    if (!isPaused && !quickViewProduct) {
+    if (!isPaused && !quickViewProduct && bestSellers.length > 0) {
       intervalId = setInterval(() => {
         if (trackRef.current) {
           const { scrollLeft, scrollWidth, clientWidth } = trackRef.current;
@@ -29,7 +29,7 @@ const BestSellersSlider = ({ currency, showToast }) => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isPaused, quickViewProduct]);
+  }, [isPaused, quickViewProduct, bestSellers.length]);
 
   const scrollLeftBtn = () => {
     if (trackRef.current) {
@@ -43,19 +43,11 @@ const BestSellersSlider = ({ currency, showToast }) => {
     }
   };
 
+  if (bestSellers.length === 0) return null;
+
   return (
     <section className="section container" style={{ paddingBottom: 0, paddingTop: '60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2 className="section-title" style={{ margin: 0 }}>Best Sellers</h2>
-        <div className="slider-nav">
-          <button className="slider-nav-btn" onClick={scrollLeftBtn} aria-label="Previous">
-            &#8592;
-          </button>
-          <button className="slider-nav-btn" onClick={scrollRightBtn} aria-label="Next">
-            &#8594;
-          </button>
-        </div>
-      </div>
+      <h2 className="section-title">Best Sellers</h2>
       
       <div 
         className="best-sellers-slider"
@@ -66,6 +58,15 @@ const BestSellersSlider = ({ currency, showToast }) => {
           setTimeout(() => setIsPaused(false), 3000);
         }}
       >
+        <div className="slider-nav">
+          <button className="slider-nav-btn" onClick={scrollLeftBtn} aria-label="Previous">
+            &#8592;
+          </button>
+          <button className="slider-nav-btn" onClick={scrollRightBtn} aria-label="Next">
+            &#8594;
+          </button>
+        </div>
+        
         <div 
           className="slider-track"
           ref={trackRef}
