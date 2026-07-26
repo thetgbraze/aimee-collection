@@ -6,3 +6,5 @@ dist/
 check_images.sh
 test_more.sh
 test_new_images.sh
+mcp_config_temp.json
+
