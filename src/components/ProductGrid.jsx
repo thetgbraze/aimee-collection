@@ -130,7 +130,7 @@ const ProductGrid = ({
                       <Eye size={16} /> QUICK VIEW
                     </button>
                     <button 
-                      className="btn btn-add-cart-icon"
+                      className="btn-add-cart-icon"
                       onClick={(e) => {
                         e.stopPropagation();
                         addToCart(product, "Small: UK 8-10", 1);

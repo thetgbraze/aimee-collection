@@ -803,26 +803,33 @@ img {
 
 .btn-add-cart-icon {
   width: 42px;
+  min-width: 42px;
   height: 42px;
-  background: var(--accent-gold);
-  border: 1px solid var(--accent-gold);
-  display: flex;
+  padding: 0 !important;
+  margin: 0;
+  overflow: visible !important;
+  background-color: var(--accent-gold) !important;
+  border: 2px solid var(--accent-gold) !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   transition: var(--transition);
   border-radius: 2px;
   cursor: pointer;
+  position: relative;
 }
 
 .btn-add-cart-icon svg {
+  width: 20px !important;
+  height: 20px !important;
   stroke: #0d0d0d !important;
   color: #0d0d0d !important;
-  transition: stroke 0.3s ease, color 0.3s ease;
+  display: block !important;
 }
 
 .btn-add-cart-icon:hover {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
 }
 
 .btn-add-cart-icon:hover svg {
