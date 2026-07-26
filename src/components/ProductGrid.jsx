@@ -133,12 +133,13 @@ const ProductGrid = ({
                       className="btn btn-add-cart-icon"
                       onClick={(e) => {
                         e.stopPropagation();
-                        addToCart(product, "Standard Fit", 1);
+                        addToCart(product, "Small: UK 8-10", 1);
                         if (showToast) showToast(`Added ${product.title} to bag!`, 'success');
                       }}
+                      aria-label="Add to Bag"
                       title="Add to Bag"
                     >
-                      <ShoppingBag size={16} />
+                      <ShoppingBag size={20} color="#0d0d0d" strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>

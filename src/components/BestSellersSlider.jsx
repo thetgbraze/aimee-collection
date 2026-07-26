@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { products, formatPrice } from '../data/products';
 import QuickViewModal from './QuickViewModal';
-import { ChevronLeft, ChevronRight, Heart, Eye, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Eye, Star, ShoppingBag } from 'lucide-react';
 
 const BestSellersSlider = ({ 
   currency, 
@@ -107,6 +107,18 @@ const BestSellersSlider = ({
                         }}
                       >
                         <Eye size={16} /> QUICK VIEW
+                      </button>
+                      <button 
+                        className="btn btn-add-cart-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product, "Small: UK 8-10", 1);
+                          if (showToast) showToast(`Added ${product.title} to bag!`, 'success');
+                        }}
+                        aria-label="Add to Bag"
+                        title="Add to Bag"
+                      >
+                        <ShoppingBag size={20} color="#0d0d0d" strokeWidth={2.5} />
                       </button>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, ArrowRight } from 'lucide-react';
+import { Search, X, ArrowRight, Eye, ShoppingBag } from 'lucide-react';
 import { products, formatPrice } from '../data/products';
 
 const popularSearches = ["Blazer", "Jumpsuit", "Leather Tote", "Silk Dress", "Stiletto", "Gold Necklace"];
@@ -33,6 +33,11 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
         (p.description && p.description.toLowerCase().includes(query.toLowerCase()))
       );
 
+  const handleChooseItem = (product) => {
+    onSelectProduct(product);
+    onClose();
+  };
+
   return (
     <div className="search-modal-overlay" onClick={onClose}>
       <div className="search-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -54,7 +59,7 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
               </button>
             )}
           </div>
-          <button className="icon-btn search-close-btn" onClick={onClose}>
+          <button className="icon-btn search-close-btn" onClick={onClose} aria-label="Close search">
             <X size={28} />
           </button>
         </div>
@@ -91,16 +96,25 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
                     <div 
                       key={product.id} 
                       className="search-result-card"
-                      onClick={() => {
-                        onSelectProduct(product);
-                        onClose();
-                      }}
+                      onClick={() => handleChooseItem(product)}
+                      title={`Click to view and choose ${product.title}`}
                     >
                       <img src={product.image} alt={product.title} className="search-result-img" />
                       <div className="search-result-info">
                         <span className="search-result-cat">{product.category}</span>
                         <h4 className="search-result-title">{product.title}</h4>
                         <p className="search-result-price">{formatPrice(product.priceUSD, product.priceRWF, currency)}</p>
+                        
+                        <button 
+                          className="btn btn-gold-sm flex items-center gap-1"
+                          style={{ marginTop: '8px', fontSize: '0.7rem', padding: '4px 10px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleChooseItem(product);
+                          }}
+                        >
+                          <Eye size={12} /> CHOOSE ITEM
+                        </button>
                       </div>
                     </div>
                   ))}
