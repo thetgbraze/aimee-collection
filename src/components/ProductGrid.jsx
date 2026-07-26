@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import QuickViewModal from './QuickViewModal';
 import { products, formatPrice as sharedFormatPrice } from '../data/products';
 import { Heart, Star, Eye, ShoppingBag } from 'lucide-react';
 
-const categories = ["All", "Clothing", "Shoes", "Bags", "Accessories"];
+const categoryRoutes = {
+  "All": "/new-arrivals",
+  "Clothing": "/clothing",
+  "Shoes": "/shoes",
+  "Bags": "/bags",
+  "Accessories": "/accessories",
+};
+const categories = Object.keys(categoryRoutes);
 
 const ProductGrid = ({ 
   currency, 
@@ -14,6 +22,12 @@ const ProductGrid = ({
   addToCart 
 }) => {
   const [activeCategory, setActiveCategory] = useState(initialCategory || "All");
+  const location = useLocation();
+
+  // Sync active category when navigating between routes
+  useEffect(() => {
+    setActiveCategory(initialCategory || "All");
+  }, [initialCategory, location.pathname]);
   const [sortBy, setSortBy] = useState("featured");
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
@@ -47,14 +61,14 @@ const ProductGrid = ({
         {/* Controls: Category Tabs & Sort Dropdown */}
         <div className="grid-controls-flex">
           <div className="category-tabs">
-            {categories.map((category) => (
-              <button 
-                key={category}
-                className={`category-tab ${activeCategory === category ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category)}
+            {categories.map((cat) => (
+              <Link 
+                key={cat}
+                to={categoryRoutes[cat]}
+                className={`category-tab ${activeCategory === cat ? 'active' : ''}`}
               >
-                {category}
-              </button>
+                {cat}
+              </Link>
             ))}
           </div>
 
