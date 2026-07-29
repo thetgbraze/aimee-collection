@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { formatPrice } from './data/products';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AnnouncementBar from './components/AnnouncementBar';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -14,6 +15,8 @@ import WishlistDrawer from './components/WishlistDrawer';
 import SearchModal from './components/SearchModal';
 import QuickViewModal from './components/QuickViewModal';
 import Footer from './components/Footer';
+import AuthModal from './components/AuthModal';
+import AdminDashboard from './components/AdminDashboard';
 
 // Reusable Toast component for feedback
 const Toast = ({ message, type, visible }) => (
@@ -71,7 +74,15 @@ const CategoryPage = ({
   </div>
 );
 
-function App() {
+// Protected Admin Route
+const ProtectedAdminRoute = ({ children }) => {
+  const { user, isStaff, loading } = useAuth();
+  if (loading) return <div className="admin-loading"><p>Loading...</p></div>;
+  if (!user || !isStaff) return <Navigate to="/" replace />;
+  return children;
+};
+
+function AppContent() {
   const [currency, setCurrency] = useState('RWF');
   const [cartItems, setCartItems] = useState(() => {
     try {
@@ -94,6 +105,7 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedSearchProduct, setSelectedSearchProduct] = useState(null);
 
   const [toast, setToast] = useState({ message: '', type: '', visible: false });
@@ -195,6 +207,7 @@ function App() {
           onOpenCart={() => setIsCartOpen(true)}
           onOpenWishlist={() => setIsWishlistOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenAuth={() => setIsAuthOpen(true)}
         />
 
         <Routes>
@@ -290,6 +303,12 @@ function App() {
               addToCart={addToCart} 
             />
           } />
+
+          <Route path="/admin" element={
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          } />
         </Routes>
 
         <Footer showToast={showToast} />
@@ -337,8 +356,18 @@ function App() {
         )}
 
         <Toast message={toast.message} type={toast.type} visible={toast.visible} />
+
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       </div>
     </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

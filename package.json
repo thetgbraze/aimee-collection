@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server-github": "^2025.4.8",
+    "@supabase/supabase-js": "^2.111.0",
     "lucide-react": "^0.309.0",
     "mcp-remote": "^0.1.38",
     "react": "^18.2.0",

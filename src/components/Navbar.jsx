@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingBag, Search, Menu, X, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import UserMenu from './UserMenu';
 
 const Navbar = ({ 
   currency, 
@@ -9,7 +10,8 @@ const Navbar = ({
   wishlistCount, 
   onOpenCart, 
   onOpenWishlist, 
-  onOpenSearch 
+  onOpenSearch,
+  onOpenAuth 
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -103,6 +105,8 @@ const Navbar = ({
             <ShoppingBag size={20} />
             {cartCount > 0 && <span className="badge-count cart">{cartCount}</span>}
           </button>
+
+          <UserMenu onOpenAuth={onOpenAuth} />
         </div>
 
       </div>

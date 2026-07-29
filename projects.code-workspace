@@ -3,14 +3,6 @@
     {
       "name": "Aimee Collection",
       "path": "."
-    },
-    {
-      "name": "My First Test",
-      "path": "../my first test"
-    },
-    {
-      "name": "Antigravity Learn",
-      "path": "../../Antigravity learn"
     }
   ],
   "settings": {}
