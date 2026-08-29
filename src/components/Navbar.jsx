@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Search, Menu, X, Heart } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingBag, Search, Menu, X, Heart, ChevronLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
 
@@ -15,6 +15,12 @@ const Navbar = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  // Swipe-to-dismiss gesture state
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchCurrentX, setTouchCurrentX] = useState(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const navRef = useRef(null);
 
   const navLinks = [
     { name: 'New Arrivals', path: '/new-arrivals' },
@@ -49,12 +55,47 @@ const Navbar = ({
     return () => { document.body.style.overflow = ''; };
   }, [isMobileMenuOpen]);
 
+  // Touch gesture handlers for sliding drawer away
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchCurrentX(e.touches[0].clientX);
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchStartX === null) return;
+    const currentX = e.touches[0].clientX;
+    setTouchCurrentX(currentX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX !== null && touchCurrentX !== null) {
+      const diff = touchCurrentX - touchStartX;
+      // If user swiped left by 40px or more, slide the nav away
+      if (diff < -40) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+    setTouchStartX(null);
+    setTouchCurrentX(null);
+    setIsSwiping(false);
+  };
+
+  // Calculate live drag position while swiping left
+  const dragOffset = (isSwiping && touchStartX !== null && touchCurrentX !== null)
+    ? Math.min(0, touchCurrentX - touchStartX)
+    : 0;
+
+  const dynamicDrawerStyle = isMobileMenuOpen && dragOffset < 0
+    ? { transform: `translateX(${dragOffset}px)`, transition: 'none' }
+    : undefined;
+
   return (
     <header className="header">
-      <div className="container flex items-center justify-between">
+      <div className="container header-container flex items-center justify-between">
         
-        {/* Left Side: Mobile Menu Button */}
-        <div className="flex items-center gap-2">
+        {/* Left Side: Mobile Menu Button & Desktop Navigation */}
+        <div className="header-left flex items-center gap-4">
           <button 
             className="mobile-menu-btn icon-btn"
             aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -64,42 +105,23 @@ const Navbar = ({
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
+
+          {/* Desktop Nav Links */}
+          <nav className="desktop-nav-links" aria-label="Main desktop navigation">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.path}
+                to={link.path} 
+                className={`nav-link ${location.pathname === link.path ? 'active' : ''}`} 
+                aria-current={location.pathname === link.path ? 'page' : undefined}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        {/* Mobile + Desktop Nav */}
-        <nav
-          id="mobile-nav"
-          className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}
-          aria-label="Main navigation"
-        >
-          {navLinks.map((link) => (
-            <Link 
-              key={link.path}
-              to={link.path} 
-              className={`nav-link ${location.pathname === link.path ? 'active' : ''}`} 
-              onClick={() => setIsMobileMenuOpen(false)}
-              aria-current={location.pathname === link.path ? 'page' : undefined}
-            >
-              {link.name}
-            </Link>
-          ))}
-
-          {/* Currency selector in mobile nav drawer */}
-          <div className="mobile-nav-currency">
-            <span className="mobile-nav-currency-label">Currency</span>
-            <select
-              className="currency-select"
-              value={currency}
-              onChange={(e) => { setCurrency(e.target.value); setIsMobileMenuOpen(false); }}
-              aria-label="Select Currency"
-            >
-              <option value="USD">USD ($)</option>
-              <option value="RWF">RWF (FRw)</option>
-            </select>
-          </div>
-        </nav>
-
-        {/* Center: Brand Logo — absolutely centered */}
+        {/* Center: Brand Logo */}
         <div className="logo">
           <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="logo-brand-wrap">
@@ -159,11 +181,73 @@ const Navbar = ({
 
       </div>
 
-      {/* Mobile nav backdrop — click to close */}
+      {/* Mobile Drawer (with Swipe-to-Dismiss) */}
+      <nav
+        id="mobile-nav"
+        ref={navRef}
+        className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}
+        style={dynamicDrawerStyle}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        aria-label="Mobile navigation"
+      >
+        {/* Drawer Top Bar with Close & Swipe Hint */}
+        <div className="mobile-nav-topbar">
+          <div className="mobile-nav-brand">
+            <span className="logo-title">AIMEE</span>
+            <span className="logo-sub">COLLECTION</span>
+          </div>
+          <button 
+            className="mobile-nav-close-icon"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close navigation"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        <div className="mobile-nav-swipe-indicator">
+          <ChevronLeft size={14} className="swipe-chevron" />
+          <span>Slide left to close</span>
+        </div>
+
+        {/* Navigation Links */}
+        <div className="mobile-nav-items">
+          {navLinks.map((link) => (
+            <Link 
+              key={link.path}
+              to={link.path} 
+              className={`mobile-nav-item-link ${location.pathname === link.path ? 'active' : ''}`} 
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-current={location.pathname === link.path ? 'page' : undefined}
+            >
+              <span>{link.name}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Currency selector in mobile nav drawer */}
+        <div className="mobile-nav-currency">
+          <span className="mobile-nav-currency-label">Currency</span>
+          <select
+            className="currency-select"
+            value={currency}
+            onChange={(e) => { setCurrency(e.target.value); setIsMobileMenuOpen(false); }}
+            aria-label="Select Currency"
+          >
+            <option value="USD">USD ($)</option>
+            <option value="RWF">RWF (FRw)</option>
+          </select>
+        </div>
+      </nav>
+
+      {/* Mobile nav backdrop — swipe or tap to dismiss */}
       {isMobileMenuOpen && (
         <div
           className="mobile-nav-backdrop"
           onClick={() => setIsMobileMenuOpen(false)}
+          onTouchStart={() => setIsMobileMenuOpen(false)}
           aria-hidden="true"
         />
       )}

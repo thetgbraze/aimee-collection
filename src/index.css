@@ -358,6 +358,18 @@ img {
   justify-content: center;
 }
 
+.desktop-nav-links {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .desktop-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2.2rem;
+  }
+}
+
 .mobile-menu-btn {
   display: block;
 }
@@ -368,38 +380,105 @@ img {
   }
 }
 
-/* Mobile Nav Drawer */
-@media (max-width: 991px) {
-  .nav-links {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    width: min(300px, 80vw);
-    height: 100dvh;
-    background: #ffffff;
-    flex-direction: column;
-    padding: 90px 28px 40px;
-    gap: 1.4rem;
-    box-shadow: var(--shadow-lg);
-    z-index: 150;
-    transition: left 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow-y: auto;
-  }
+/* ── Mobile Nav Slide-Out Drawer ───────────────────────── */
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: min(320px, 85vw);
+  height: 100dvh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 36px;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  touch-action: pan-y;
+}
 
-  .nav-links.open {
-    display: flex;
-    left: 0;
-  }
+.mobile-nav-drawer.open {
+  left: 0;
+}
 
-  .nav-link {
-    font-size: 1rem;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border-color);
-    width: 100%;
-  }
+.mobile-nav-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
 
-  .nav-link::after {
-    display: none;
+.mobile-nav-close-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.mobile-nav-close-icon:hover {
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+.mobile-nav-swipe-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  padding: 4px 8px;
+  background: rgba(212, 175, 55, 0.08);
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.mobile-nav-swipe-indicator .swipe-chevron {
+  animation: swipeHint 1.5s infinite ease-in-out;
+}
+
+@keyframes swipeHint {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+}
+
+.mobile-nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.mobile-nav-item-link {
+  font-size: 1.02rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 6px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: var(--transition);
+}
+
+.mobile-nav-item-link:hover, .mobile-nav-item-link.active {
+  color: var(--accent-gold);
+  padding-left: 12px;
+}
+
+@media (min-width: 992px) {
+  .mobile-nav-drawer {
+    display: none !important;
   }
 }
 
@@ -2932,49 +3011,97 @@ img {
 /* ─── HEADER / NAVBAR ─────────────────────────────────── */
 @media (max-width: 991px) {
   .header {
-    padding: 10px 0;
+    padding: 8px 0;
   }
 
-  .container.flex.items-center.justify-between {
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
     position: relative;
   }
 
-  /* Logo centers on mobile */
+  .header-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    z-index: 2;
+  }
+
+  /* Logo is centered without absolute positioning to guarantee no overlap */
   .logo {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    pointer-events: auto;
+    position: static;
+    transform: none;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    min-width: 0;
+    padding: 0 4px;
+    z-index: 1;
   }
 
   .logo-title {
-    font-size: 1.4rem;
-    letter-spacing: 3px;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    white-space: nowrap;
   }
 
   .logo-sub {
-    font-size: 0.45rem;
-    letter-spacing: 4px;
+    font-size: 0.42rem;
+    letter-spacing: 3px;
+    white-space: nowrap;
   }
 
-  /* Left side keeps menu btn */
   .header-actions {
-    gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    z-index: 2;
   }
 
-  /* Hide currency selector on small screens — use menu instead */
+  /* Hide currency selector on small screens — accessible inside mobile nav drawer */
   .currency-selector-box {
     display: none;
   }
 
-  /* Make icon buttons slightly larger for touch */
   .icon-btn {
-    padding: 8px;
+    padding: 6px;
   }
 }
 
-/* On very small phones, hide UserMenu text */
-@media (max-width: 360px) {
+@media (max-width: 420px) {
+  .logo-title {
+    font-size: 1.12rem;
+    letter-spacing: 1.5px;
+  }
+
+  .logo-sub {
+    font-size: 0.36rem;
+    letter-spacing: 2px;
+  }
+
+  .header-actions {
+    gap: 1px;
+  }
+
+  .icon-btn {
+    padding: 5px;
+  }
+}
+
+@media (max-width: 350px) {
+  .logo-title {
+    font-size: 1rem;
+    letter-spacing: 1px;
+  }
+
+  .logo-sub {
+    letter-spacing: 1.5px;
+  }
+
   .user-menu-chevron {
     display: none;
   }
