@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { products, formatPrice } from '../data/products';
 import QuickViewModal from './QuickViewModal';
 import { ChevronLeft, ChevronRight, Heart, Eye, Star, ShoppingBag } from 'lucide-react';
@@ -14,6 +14,9 @@ const BestSellersSlider = ({
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const trackRef = useRef(null);
+
+  // Tap-to-reveal: tracks which product image was tapped on touch devices
+  const [touchedProductId, setTouchedProductId] = useState(null);
 
   const bestSellers = products.filter(p => p.isBestSeller && (!category || category === 'All' || p.category === category));
 
@@ -48,6 +51,31 @@ const BestSellersSlider = ({
     }
   };
 
+  // Dismiss revealed actions when tapping outside a product image container
+  const handleGlobalTap = useCallback((e) => {
+    if (!e.target.closest('.product-image-container')) {
+      setTouchedProductId(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('touchstart', handleGlobalTap, { passive: true });
+    document.addEventListener('click', handleGlobalTap);
+    return () => {
+      document.removeEventListener('touchstart', handleGlobalTap);
+      document.removeEventListener('click', handleGlobalTap);
+    };
+  }, [handleGlobalTap]);
+
+  const handleImageTap = (e, productId) => {
+    // Only activate on touch-only devices (no hover capability)
+    if (window.matchMedia('(hover: none)').matches) {
+      e.stopPropagation();
+      setIsPaused(true); // Pause the auto-scroll while user is exploring
+      setTouchedProductId(prev => prev === productId ? null : productId);
+    }
+  };
+
   if (bestSellers.length === 0) return null;
 
   return (
@@ -70,16 +98,21 @@ const BestSellersSlider = ({
       <div 
         className="best-sellers-slider"
         onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
+        onMouseLeave={() => { setIsPaused(false); setTouchedProductId(null); }}
       >
         <div className="slider-track" ref={trackRef}>
           {bestSellers.map((product) => {
             const isWishlisted = wishlistIds.includes(product.id);
+            const isTouched = touchedProductId === product.id;
 
             return (
               <div key={product.id} className="slider-item">
                 <div className="product-card">
-                  <div className="product-image-container">
+                  <div
+                    className={`product-image-container${isTouched ? ' is-touched' : ''}`}
+                    onTouchStart={(e) => handleImageTap(e, product.id)}
+                    onClick={(e) => handleImageTap(e, product.id)}
+                  >
                     <span className="product-badge bestseller">BESTSELLER</span>
                     
                     <button 
@@ -98,12 +131,18 @@ const BestSellersSlider = ({
                       <img src={product.secondaryImage} alt={`${product.title} lifestyle view`} className="product-image secondary" loading="lazy" />
                     )}
 
+                    {/* Tap-to-reveal hint on mobile */}
+                    <div className="touch-hint" aria-hidden="true">
+                      <span>Tap to explore</span>
+                    </div>
+
                     <div className="product-actions">
                       <button 
                         className="btn btn-quick-view flex items-center gap-1"
                         onClick={(e) => {
                           e.stopPropagation();
                           setQuickViewProduct(product);
+                          setTouchedProductId(null);
                         }}
                       >
                         <Eye size={16} /> QUICK VIEW
@@ -114,6 +153,7 @@ const BestSellersSlider = ({
                           e.stopPropagation();
                           addToCart(product, "Small: UK 8-10", 1);
                           if (showToast) showToast(`Added ${product.title} to bag!`, 'success');
+                          setTouchedProductId(null);
                         }}
                         aria-label="Add to Bag"
                         title="Add to Bag"

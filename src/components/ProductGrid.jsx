@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import QuickViewModal from './QuickViewModal';
 import { products, formatPrice as sharedFormatPrice } from '../data/products';
@@ -31,7 +31,34 @@ const ProductGrid = ({
   const [sortBy, setSortBy] = useState("featured");
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
+  // Tap-to-reveal: tracks which product image was tapped on touch devices
+  const [touchedProductId, setTouchedProductId] = useState(null);
+
   const formatPrice = (usd, rwf) => sharedFormatPrice(usd, rwf, currency);
+
+  // Dismiss revealed actions when tapping anywhere outside a product card
+  const handleGlobalTap = useCallback((e) => {
+    if (!e.target.closest('.product-image-container')) {
+      setTouchedProductId(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('touchstart', handleGlobalTap, { passive: true });
+    document.addEventListener('click', handleGlobalTap);
+    return () => {
+      document.removeEventListener('touchstart', handleGlobalTap);
+      document.removeEventListener('click', handleGlobalTap);
+    };
+  }, [handleGlobalTap]);
+
+  const handleImageTap = (e, productId) => {
+    // Only activate tap-to-reveal behaviour on touch-capable devices
+    if (window.matchMedia('(hover: none)').matches) {
+      e.stopPropagation();
+      setTouchedProductId(prev => prev === productId ? null : productId);
+    }
+  };
 
   // Filter products by category
   let filtered = activeCategory === "All" 
@@ -54,7 +81,7 @@ const ProductGrid = ({
       <section className="section container">
         <div className="section-header-centered">
           <span className="section-tag">HAUTE COUTURE SELECTION</span>
-          <h2 className="section-title">New Arrivals & Collection</h2>
+          <h2 className="section-title">New Arrivals &amp; Collection</h2>
           <div className="section-divider"></div>
         </div>
         
@@ -93,10 +120,15 @@ const ProductGrid = ({
         <div className="product-grid">
           {filtered.map((product) => {
             const isWishlisted = wishlistIds.includes(product.id);
+            const isTouched = touchedProductId === product.id;
 
             return (
               <div key={product.id} className="product-card">
-                <div className="product-image-container">
+                <div
+                  className={`product-image-container${isTouched ? ' is-touched' : ''}`}
+                  onTouchStart={(e) => handleImageTap(e, product.id)}
+                  onClick={(e) => handleImageTap(e, product.id)}
+                >
                   {/* Badge */}
                   {product.badge && (
                     <span className={`product-badge ${product.badge.toLowerCase().replaceAll(' ', '-')}`}>
@@ -132,13 +164,19 @@ const ProductGrid = ({
                     />
                   )}
 
-                  {/* Action Bar on Hover */}
+                  {/* Tap-to-reveal hint on mobile (shown when NOT touched) */}
+                  <div className="touch-hint" aria-hidden="true">
+                    <span>Tap to explore</span>
+                  </div>
+
+                  {/* Action Bar — hover on desktop, tap-revealed on mobile */}
                   <div className="product-actions">
                     <button 
                       className="btn btn-quick-view flex items-center gap-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         setQuickViewProduct(product);
+                        setTouchedProductId(null);
                       }}
                     >
                       <Eye size={16} /> QUICK VIEW
@@ -149,6 +187,7 @@ const ProductGrid = ({
                         e.stopPropagation();
                         addToCart(product, "Small: UK 8-10", 1);
                         if (showToast) showToast(`Added ${product.title} to bag!`, 'success');
+                        setTouchedProductId(null);
                       }}
                       aria-label="Add to Bag"
                       title="Add to Bag"

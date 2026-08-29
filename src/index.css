@@ -3113,23 +3113,27 @@ img {
     font-size: 0.95rem;
   }
 
+  /* ─── TAP-TO-REVEAL: hidden by default on touch devices ─── */
   .product-actions {
-    /* Keep position:absolute — changing to relative clips inside overflow:hidden */
     position: absolute;
-    bottom: 0;          /* Always visible — touch devices have no hover */
+    bottom: -60px;            /* hidden below the image */
     left: 0;
     width: 100%;
     background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    padding: 10px 10px;
+    padding: 10px;
     gap: 6px;
     z-index: 12;
-    /* Remove the slide-in animation on touch */
-    transition: none;
+    transition: bottom 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Prevent the desktop hover rule from overriding on mobile */
+  /* Reveal actions when the image container has the is-touched class */
+  .product-image-container.is-touched .product-actions {
+    bottom: 0;
+  }
+
+  /* Keep desktop hover rule consistent (won't fire on touch-only devices) */
   .product-card:hover .product-actions {
     bottom: 0;
   }
@@ -3144,6 +3148,50 @@ img {
     width: 36px;
     min-width: 36px;
     height: 36px;
+  }
+
+  /* Tap hint — visible when NOT touched */
+  .touch-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 11;
+    transition: opacity 0.2s ease;
+  }
+
+  .touch-hint span {
+    background: rgba(13, 13, 13, 0.62);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* Hide hint once actions are revealed */
+  .product-image-container.is-touched .touch-hint {
+    opacity: 0;
+  }
+}
+
+/* Base touch-hint is hidden on desktop by default */
+.touch-hint {
+  display: none;
+}
+
+@media (hover: none), (max-width: 768px) {
+  .touch-hint {
+    display: flex;
+  }
+
+  .product-image-container.is-touched .product-actions {
+    bottom: 0 !important;
   }
 }
 
