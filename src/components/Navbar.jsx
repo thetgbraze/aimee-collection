@@ -53,8 +53,8 @@ const Navbar = ({
     <header className="header">
       <div className="container flex items-center justify-between">
         
-        {/* Left Side: Mobile Menu Button & Desktop Links */}
-        <div className="flex items-center gap-4">
+        {/* Left Side: Mobile Menu Button */}
+        <div className="flex items-center gap-2">
           <button 
             className="mobile-menu-btn icon-btn"
             aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -62,29 +62,44 @@ const Navbar = ({
             aria-controls="mobile-nav"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-          
-          <nav
-            id="mobile-nav"
-            className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}
-            aria-label="Main navigation"
-          >
-            {navLinks.map((link) => (
-              <Link 
-                key={link.path}
-                to={link.path} 
-                className={`nav-link ${location.pathname === link.path ? 'active' : ''}`} 
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-current={location.pathname === link.path ? 'page' : undefined}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
         </div>
 
-        {/* Center: Brand Logo */}
+        {/* Mobile + Desktop Nav */}
+        <nav
+          id="mobile-nav"
+          className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}
+          aria-label="Main navigation"
+        >
+          {navLinks.map((link) => (
+            <Link 
+              key={link.path}
+              to={link.path} 
+              className={`nav-link ${location.pathname === link.path ? 'active' : ''}`} 
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-current={location.pathname === link.path ? 'page' : undefined}
+            >
+              {link.name}
+            </Link>
+          ))}
+
+          {/* Currency selector in mobile nav drawer */}
+          <div className="mobile-nav-currency">
+            <span className="mobile-nav-currency-label">Currency</span>
+            <select
+              className="currency-select"
+              value={currency}
+              onChange={(e) => { setCurrency(e.target.value); setIsMobileMenuOpen(false); }}
+              aria-label="Select Currency"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="RWF">RWF (FRw)</option>
+            </select>
+          </div>
+        </nav>
+
+        {/* Center: Brand Logo — absolutely centered */}
         <div className="logo">
           <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="logo-brand-wrap">
@@ -94,8 +109,9 @@ const Navbar = ({
           </Link>
         </div>
 
-        {/* Right Side: Currency & Actions */}
+        {/* Right Side: Currency (desktop) & Action Icons */}
         <div className="header-actions">
+          {/* Desktop-only currency selector */}
           <div className="currency-selector-box">
             <select 
               id="currency-select"
