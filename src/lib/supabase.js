@@ -1,13 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Read from environment variables, with fallback to default public anon configuration
+// Note: In Supabase, the anon key is a public key intended for browser clients protected by RLS
+const supabaseUrl = 
+  import.meta.env.VITE_SUPABASE_URL || 
+  'https://xkftwzkqjmormacnucoy.supabase.co';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    '[Aimee Collection] Missing Supabase environment variables.\n' +
-    'Create a .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.\n' +
-    'See .env.example for reference.'
+const supabaseAnonKey = 
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrZnR3emtxam1vcm1hY251Y295Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNzk5NDksImV4cCI6MjEwMDg1NTk0OX0.I6lGiKOcU1YOp95RYuw0vucBumhctMbKcwPE2blrVhk';
+
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn(
+    '[Aimee Collection] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set in environment. Falling back to default project client.'
   );
 }
 
