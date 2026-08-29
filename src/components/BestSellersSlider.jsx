@@ -95,7 +95,7 @@ const BestSellersSlider = ({
 
                     <img src={product.image} alt={product.title} className="product-image primary" loading="lazy" />
                     {product.secondaryImage && (
-                      <img src={product.secondaryImage} alt={product.title} className="product-image secondary" loading="lazy" />
+                      <img src={product.secondaryImage} alt={`${product.title} lifestyle view`} className="product-image secondary" loading="lazy" />
                     )}
 
                     <div className="product-actions">

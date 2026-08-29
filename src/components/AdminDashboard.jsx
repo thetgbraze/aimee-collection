@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, TrendingUp,
-  AlertTriangle, ArrowLeft, LogOut, ChevronDown, ChevronUp,
-  DollarSign, BarChart3, UserPlus, Archive, Eye, Edit3,
-  Loader2, RefreshCw, Shield, Store
+  AlertTriangle, ArrowLeft, LogOut, Archive,
+  Loader2, RefreshCw, Shield, Store, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -28,6 +27,7 @@ const AdminDashboard = () => {
   const { profile, signOut, isAdmin, isStoreManager } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalCategories: 0,
@@ -41,8 +41,9 @@ const AdminDashboard = () => {
     categories: [],
   });
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const [
         productsRes,
@@ -58,11 +59,28 @@ const AdminDashboard = () => {
         supabase.from('product_variants').select('*, products(title)').lte('stock_quantity', 5).eq('is_active', true).order('stock_quantity'),
       ]);
 
+      // Surface any Supabase errors
+      const errors = [productsRes, categoriesRes, variantsRes, ordersRes, lowStockRes]
+        .filter(r => r.error)
+        .map(r => r.error.message);
+
+      if (errors.length > 0) {
+        console.error('[AdminDashboard] Query errors:', errors);
+        setFetchError(`Some data could not be loaded: ${errors[0]}`);
+      }
+
       // Users query only for admins
       let usersData = [];
       if (isAdmin) {
-        const usersRes = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        usersData = usersRes.data || [];
+        const usersRes = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (usersRes.error) {
+          console.error('[AdminDashboard] Users query error:', usersRes.error.message);
+        } else {
+          usersData = usersRes.data || [];
+        }
       }
 
       setStats({
@@ -78,18 +96,20 @@ const AdminDashboard = () => {
         categories: categoriesRes.data || [],
       });
     } catch (err) {
-      console.error('Dashboard fetch error:', err);
+      console.error('[AdminDashboard] Unexpected error:', err);
+      setFetchError('Failed to load dashboard data. Please try again.');
     }
     setLoading(false);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
+  // Re-fetch when isAdmin status changes (e.g. after auth state update)
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const roleBadge = isAdmin ? 'Admin' : 'Store Manager';
-  const roleIcon = isAdmin ? Shield : Store;
-  const RoleIcon = roleIcon;
+  const RoleIcon = isAdmin ? Shield : Store;
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -112,6 +132,14 @@ const AdminDashboard = () => {
       cancelled: '#ef4444',
     };
     return colors[status] || '#666';
+  };
+
+  const getAvatarInitial = (user) => {
+    return (
+      user?.first_name?.[0]?.toUpperCase() ||
+      user?.email?.[0]?.toUpperCase() ||
+      '?'
+    );
   };
 
   if (loading) {
@@ -137,7 +165,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <nav className="admin-nav">
+        <nav className="admin-nav" aria-label="Dashboard navigation">
           {tabs.map(tab => {
             const TabIcon = tab.icon;
             return (
@@ -145,6 +173,7 @@ const AdminDashboard = () => {
                 key={tab.id}
                 className={`admin-nav-item ${activeTab === tab.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
+                aria-current={activeTab === tab.id ? 'page' : undefined}
               >
                 <TabIcon size={18} />
                 <span>{tab.label}</span>
@@ -156,7 +185,7 @@ const AdminDashboard = () => {
         <div className="admin-sidebar-footer">
           <div className="admin-user-info">
             <div className="admin-user-avatar">
-              {profile?.first_name?.[0] || profile?.email?.[0]?.toUpperCase() || 'A'}
+              {getAvatarInitial(profile)}
             </div>
             <div className="admin-user-details">
               <span className="admin-user-name">
@@ -187,10 +216,19 @@ const AdminDashboard = () => {
               {activeTab === 'users' && 'Manage user accounts'}
             </p>
           </div>
-          <button className="admin-refresh-btn" onClick={fetchDashboardData}>
+          <button className="admin-refresh-btn" onClick={fetchDashboardData} aria-label="Refresh dashboard data">
             <RefreshCw size={16} /> Refresh
           </button>
         </div>
+
+        {/* Error Banner */}
+        {fetchError && (
+          <div className="admin-error-banner" role="alert">
+            <AlertCircle size={16} />
+            <span>{fetchError}</span>
+            <button onClick={() => setFetchError(null)} aria-label="Dismiss error">✕</button>
+          </div>
+        )}
 
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
@@ -272,6 +310,7 @@ const AdminDashboard = () => {
                             src={product.image_url}
                             alt={product.title}
                             className="admin-product-thumb"
+                            loading="lazy"
                           />
                         </td>
                         <td className="admin-product-title">{product.title}</td>
@@ -297,44 +336,52 @@ const AdminDashboard = () => {
         {/* PRODUCTS TAB */}
         {activeTab === 'products' && (
           <div className="admin-content">
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Image</th>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Price (USD)</th>
-                    <th>Price (RWF)</th>
-                    <th>Badge</th>
-                    <th>Rating</th>
-                    <th>Active</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.products.map(product => (
-                    <tr key={product.id}>
-                      <td>
-                        <img src={product.image_url} alt={product.title} className="admin-product-thumb" />
-                      </td>
-                      <td className="admin-product-title">{product.title}</td>
-                      <td>{product.categories?.name || '—'}</td>
-                      <td>{formatCurrency(product.price_usd)}</td>
-                      <td>RWF {Number(product.price_rwf).toLocaleString()}</td>
-                      <td>
-                        {product.badge ? (
-                          <span className="admin-badge" data-badge={product.badge.toLowerCase()}>{product.badge}</span>
-                        ) : '—'}
-                      </td>
-                      <td>⭐ {product.rating}</td>
-                      <td>
-                        <span className={`admin-status-dot ${product.is_active ? 'active' : 'inactive'}`}></span>
-                      </td>
+            {stats.products.length === 0 ? (
+              <div className="admin-empty-state">
+                <Package size={48} />
+                <h3>No Products Found</h3>
+                <p>Products from your Supabase catalog will appear here.</p>
+              </div>
+            ) : (
+              <div className="admin-table-wrapper">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Title</th>
+                      <th>Category</th>
+                      <th>Price (USD)</th>
+                      <th>Price (RWF)</th>
+                      <th>Badge</th>
+                      <th>Rating</th>
+                      <th>Active</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {stats.products.map(product => (
+                      <tr key={product.id}>
+                        <td>
+                          <img src={product.image_url} alt={product.title} className="admin-product-thumb" loading="lazy" />
+                        </td>
+                        <td className="admin-product-title">{product.title}</td>
+                        <td>{product.categories?.name || '—'}</td>
+                        <td>{formatCurrency(product.price_usd)}</td>
+                        <td>RWF {Number(product.price_rwf).toLocaleString()}</td>
+                        <td>
+                          {product.badge ? (
+                            <span className="admin-badge" data-badge={product.badge.toLowerCase()}>{product.badge}</span>
+                          ) : '—'}
+                        </td>
+                        <td>⭐ {product.rating}</td>
+                        <td>
+                          <span className={`admin-status-dot ${product.is_active ? 'active' : 'inactive'}`}></span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -394,21 +441,21 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {stats.users.map(user => (
-                    <tr key={user.id}>
+                  {stats.users.map(u => (
+                    <tr key={u.id}>
                       <td className="admin-product-title">
                         <div className="admin-user-avatar small">
-                          {user.first_name?.[0] || user.email[0].toUpperCase()}
+                          {getAvatarInitial(u)}
                         </div>
-                        {user.first_name ? `${user.first_name} ${user.last_name || ''}` : '—'}
+                        {u.first_name ? `${u.first_name} ${u.last_name || ''}` : '—'}
                       </td>
-                      <td>{user.email}</td>
+                      <td>{u.email || '—'}</td>
                       <td>
-                        <span className={`admin-role-badge ${user.role}`}>
-                          {user.role.replace('_', ' ')}
+                        <span className={`admin-role-badge ${u.role || 'user_buyer'}`}>
+                          {(u.role || 'user_buyer').replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                      <td>{new Date(u.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>

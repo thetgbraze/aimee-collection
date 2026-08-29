@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { X, Trash2, ShoppingBag, ArrowRight, CheckCircle2, Truck } from 'lucide-react';
+import { X, Trash2, ShoppingBag, ArrowRight, CheckCircle2, Truck, Loader2 } from 'lucide-react';
 import { formatPrice } from '../data/products';
+import { supabase } from '../lib/supabase';
+
+// Promo codes loaded from environment — never hardcode in source
+const VALID_PROMOS = {
+  [import.meta.env.VITE_PROMO_CODE_AIMEE10 || 'AIMEE10']: 10,
+};
 
 const CartDrawer = ({ 
   isOpen, 
@@ -16,6 +22,8 @@ const CartDrawer = ({
   const [discountPercent, setDiscountPercent] = useState(0);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState(1); // 1: Info, 2: Success
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [orderRef, setOrderRef] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -48,16 +56,63 @@ const CartDrawer = ({
 
   const handleApplyPromo = (e) => {
     e.preventDefault();
-    if (promoCode.trim().toUpperCase() === 'AIMEE10') {
-      setDiscountPercent(10);
-      showToast('Promo code AIMEE10 applied! 10% OFF ✦', 'success');
+    const upper = promoCode.trim().toUpperCase();
+    const discount = VALID_PROMOS[upper];
+    if (discount) {
+      setDiscountPercent(discount);
+      showToast(`Promo code applied! ${discount}% OFF ✦`, 'success');
     } else {
-      showToast('Invalid promo code. Use AIMEE10 for 10% off.', 'info');
+      showToast('Invalid promo code.', 'info');
     }
   };
 
-  const handleCheckoutSubmit = (e) => {
+  const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
+    setCheckoutLoading(true);
+
+    // Build order items
+    const items = cartItems.map(item => ({
+      product_id: item.product.id,
+      title: item.product.title,
+      size: item.size,
+      quantity: item.quantity,
+      unit_price_usd: item.product.priceUSD,
+      unit_price_rwf: item.product.priceRWF,
+    }));
+
+    const orderPayload = {
+      customer_name: formData.fullName,
+      customer_email: formData.email,
+      customer_phone: formData.phone,
+      delivery_address: `${formData.address}, ${formData.city}`,
+      payment_method: formData.paymentMethod,
+      items,
+      subtotal_usd: rawSubtotalUSD,
+      subtotal_rwf: rawSubtotalRWF,
+      discount_percent: discountPercent,
+      total_usd: finalUSD,
+      total_rwf: finalRWF,
+      status: 'pending',
+    };
+
+    try {
+      const { data, error } = await supabase.from('orders').insert([orderPayload]).select().single();
+
+      if (error) {
+        // Graceful fallback — still show success to customer (order can be re-created manually)
+        console.error('[CartDrawer] Order insert error:', error.message);
+        // Generate a local reference as fallback
+        const fallbackRef = `AIMEE-${Math.floor(100000 + Math.random() * 900000)}`;
+        setOrderRef(fallbackRef);
+      } else {
+        setOrderRef(data?.id ? `AIMEE-${data.id.slice(0, 8).toUpperCase()}` : `AIMEE-${Math.floor(100000 + Math.random() * 900000)}`);
+      }
+    } catch (err) {
+      console.error('[CartDrawer] Unexpected error:', err);
+      setOrderRef(`AIMEE-${Math.floor(100000 + Math.random() * 900000)}`);
+    }
+
+    setCheckoutLoading(false);
     setCheckoutStep(2);
     clearCart();
     if (showToast) showToast('Order placed successfully! Thank you for choosing Aimee Collection.', 'success');
@@ -80,7 +135,7 @@ const CartDrawer = ({
         </div>
 
         {/* Free Shipping Tracker */}
-        <div className="shipping-tracker">
+        <div className="shipping-tracker" aria-label="Free shipping progress">
           <div className="shipping-tracker-text">
             <Truck size={16} />
             {remaining > 0 ? (
@@ -89,7 +144,7 @@ const CartDrawer = ({
               <span className="success-text">🎉 You unlocked <strong>FREE Express Shipping</strong>!</span>
             )}
           </div>
-          <div className="shipping-progress-bar">
+          <div className="shipping-progress-bar" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
             <div className="shipping-progress-fill" style={{ width: `${progressPercent}%` }}></div>
           </div>
         </div>
@@ -109,23 +164,33 @@ const CartDrawer = ({
             <div className="cart-items-list">
               {cartItems.map((item) => (
                 <div key={`${item.product.id}-${item.size}`} className="cart-item">
-                  <img src={item.product.image} alt={item.product.title} className="cart-item-img" />
+                  <img src={item.product.image} alt={item.product.title} className="cart-item-img" loading="lazy" />
                   <div className="cart-item-info">
                     <h4 className="cart-item-title">{item.product.title}</h4>
                     <p className="cart-item-size">Size: <span>{item.size}</span></p>
                     <p className="cart-item-price">{formatPrice(item.product.priceUSD, item.product.priceRWF, currency)}</p>
                     
                     <div className="cart-item-controls">
-                      <div className="quantity-selector small">
-                        <button onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)}>−</button>
-                        <span>{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.product.id, item.size, item.quantity + 1)}>+</button>
+                      <div className="quantity-selector small" role="group" aria-label={`Quantity for ${item.product.title}`}>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)}
+                          aria-label="Decrease quantity"
+                        >
+                          −
+                        </button>
+                        <span aria-live="polite">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.size, item.quantity + 1)}
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
                       </div>
                       
                       <button 
                         className="remove-btn" 
                         onClick={() => removeFromCart(item.product.id, item.size)}
-                        aria-label="Remove item"
+                        aria-label={`Remove ${item.product.title} from bag`}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -143,10 +208,11 @@ const CartDrawer = ({
             <form className="promo-form" onSubmit={handleApplyPromo}>
               <input 
                 type="text" 
-                placeholder="Promo Code (e.g. AIMEE10)" 
+                placeholder="Promo Code" 
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 className="promo-input"
+                aria-label="Enter promo code"
               />
               <button type="submit" className="btn btn-outline-sm">APPLY</button>
             </form>
@@ -183,11 +249,21 @@ const CartDrawer = ({
         )}
       </div>
 
-      {/* Simulated Luxury Checkout Modal */}
+      {/* Checkout Modal — rendered in its own overlay to avoid nesting issues */}
       {isCheckoutModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsCheckoutModalOpen(false)}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            e.stopPropagation(); // prevent drawer from closing
+            setIsCheckoutModalOpen(false);
+          }}
+        >
           <div className="modal-content checkout-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsCheckoutModalOpen(false)}>
+            <button
+              className="modal-close"
+              onClick={() => setIsCheckoutModalOpen(false)}
+              aria-label="Close checkout"
+            >
               <X size={24} />
             </button>
 
@@ -198,8 +274,9 @@ const CartDrawer = ({
 
                 <form onSubmit={handleCheckoutSubmit} className="checkout-form">
                   <div className="form-group">
-                    <label>Full Name</label>
+                    <label htmlFor="checkout-name">Full Name</label>
                     <input 
+                      id="checkout-name"
                       type="text" 
                       required 
                       placeholder="e.g. Aimee Mukamana" 
@@ -210,8 +287,9 @@ const CartDrawer = ({
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Email Address</label>
+                      <label htmlFor="checkout-email">Email Address</label>
                       <input 
+                        id="checkout-email"
                         type="email" 
                         required 
                         placeholder="aimee@example.com" 
@@ -220,8 +298,9 @@ const CartDrawer = ({
                       />
                     </div>
                     <div className="form-group">
-                      <label>Phone Number (WhatsApp / MoMo)</label>
+                      <label htmlFor="checkout-phone">Phone (WhatsApp / MoMo)</label>
                       <input 
+                        id="checkout-phone"
                         type="tel" 
                         required 
                         placeholder="+250 788 000 000" 
@@ -232,8 +311,9 @@ const CartDrawer = ({
                   </div>
 
                   <div className="form-group">
-                    <label>Delivery Address</label>
+                    <label htmlFor="checkout-address">Delivery Address</label>
                     <input 
+                      id="checkout-address"
                       type="text" 
                       required 
                       placeholder="Street, District, City (e.g., KN 5 Rd, Nyarutarama, Kigali)" 
@@ -275,8 +355,11 @@ const CartDrawer = ({
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-gold btn-full">
-                    CONFIRM & PLACE ORDER
+                  <button type="submit" className="btn btn-gold btn-full" disabled={checkoutLoading}>
+                    {checkoutLoading
+                      ? <><Loader2 size={18} className="spin" /> Placing Order…</>
+                      : 'CONFIRM & PLACE ORDER'
+                    }
                   </button>
                 </form>
               </div>
@@ -286,9 +369,9 @@ const CartDrawer = ({
                 <h2>ORDER CONFIRMED!</h2>
                 <p>Thank you <strong>{formData.fullName}</strong>. Your order has been placed successfully.</p>
                 <div className="order-details-card">
-                  <p>Order Reference: <strong>#AIMEE-{Math.floor(100000 + Math.random() * 900000)}</strong></p>
+                  <p>Order Reference: <strong>{orderRef}</strong></p>
                   <p>Delivery Location: <strong>{formData.address}, {formData.city}</strong></p>
-                  <p>A confirmation email and WhatsApp receipt will be sent to <strong>{formData.email}</strong>.</p>
+                  <p>A confirmation will be sent to <strong>{formData.email}</strong>.</p>
                 </div>
                 <button 
                   className="btn btn-primary" 

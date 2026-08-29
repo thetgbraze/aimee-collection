@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Search, Menu, X, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
@@ -24,6 +24,31 @@ const Navbar = ({
     { name: 'Accessories', path: '/accessories' },
   ];
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileMenuOpen]);
+
   return (
     <header className="header">
       <div className="container flex items-center justify-between">
@@ -33,18 +58,25 @@ const Navbar = ({
           <button 
             className="mobile-menu-btn icon-btn"
             aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
           
-          <nav className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}>
+          <nav
+            id="mobile-nav"
+            className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}
+            aria-label="Main navigation"
+          >
             {navLinks.map((link) => (
               <Link 
                 key={link.path}
                 to={link.path} 
                 className={`nav-link ${location.pathname === link.path ? 'active' : ''}`} 
                 onClick={() => setIsMobileMenuOpen(false)}
+                aria-current={location.pathname === link.path ? 'page' : undefined}
               >
                 {link.name}
               </Link>
@@ -88,28 +120,37 @@ const Navbar = ({
 
           <button 
             className="icon-btn action-badge-btn" 
-            aria-label="Wishlist"
+            aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}
             onClick={onOpenWishlist}
             title="View Wishlist"
           >
             <Heart size={20} />
-            {wishlistCount > 0 && <span className="badge-count wishlist">{wishlistCount}</span>}
+            {wishlistCount > 0 && <span className="badge-count wishlist" aria-hidden="true">{wishlistCount}</span>}
           </button>
           
           <button 
             className="icon-btn action-badge-btn" 
-            aria-label="Shopping bag"
+            aria-label={`Shopping bag${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
             onClick={onOpenCart}
             title="View Bag"
           >
             <ShoppingBag size={20} />
-            {cartCount > 0 && <span className="badge-count cart">{cartCount}</span>}
+            {cartCount > 0 && <span className="badge-count cart" aria-hidden="true">{cartCount}</span>}
           </button>
 
           <UserMenu onOpenAuth={onOpenAuth} />
         </div>
 
       </div>
+
+      {/* Mobile nav backdrop — click to close */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-nav-backdrop"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     </header>
   );
 };

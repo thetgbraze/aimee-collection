@@ -40,7 +40,7 @@ const UserMenu = ({ onOpenAuth }) => {
         aria-label="Account menu"
       >
         <div className="user-menu-avatar">
-          {profile?.first_name?.[0] || user.email[0].toUpperCase()}
+        {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
         </div>
         <ChevronDown size={14} className={`user-menu-chevron ${isOpen ? 'open' : ''}`} />
       </button>

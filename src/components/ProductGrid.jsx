@@ -99,7 +99,7 @@ const ProductGrid = ({
                 <div className="product-image-container">
                   {/* Badge */}
                   {product.badge && (
-                    <span className={`product-badge ${product.badge.toLowerCase().replace(' ', '-')}`}>
+                    <span className={`product-badge ${product.badge.toLowerCase().replaceAll(' ', '-')}`}>
                       {product.badge}
                     </span>
                   )}

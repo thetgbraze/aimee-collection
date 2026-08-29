@@ -20,7 +20,12 @@ import AdminDashboard from './components/AdminDashboard';
 
 // Reusable Toast component for feedback
 const Toast = ({ message, type, visible }) => (
-  <div className={`toast ${type} ${visible ? 'show' : ''}`}>
+  <div
+    className={`toast ${type} ${visible ? 'show' : ''}`}
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
     {message}
   </div>
 );
