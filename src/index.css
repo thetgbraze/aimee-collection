@@ -3114,21 +3114,36 @@ img {
   }
 
   .product-actions {
-    bottom: 0;     /* Always visible on touch — no hover */
-    position: relative;
-    background: transparent;
-    backdrop-filter: none;
-    padding: 8px 0 0;
+    /* Keep position:absolute — changing to relative clips inside overflow:hidden */
+    position: absolute;
+    bottom: 0;          /* Always visible — touch devices have no hover */
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 10px 10px;
     gap: 6px;
+    z-index: 12;
+    /* Remove the slide-in animation on touch */
+    transition: none;
   }
 
+  /* Prevent the desktop hover rule from overriding on mobile */
   .product-card:hover .product-actions {
     bottom: 0;
   }
 
   .btn-quick-view {
     font-size: 0.68rem;
-    padding: 8px;
+    padding: 8px 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-add-cart-icon {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
   }
 }
 
