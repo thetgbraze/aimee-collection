@@ -213,23 +213,8 @@ const ProductGrid = ({
                     <span className="reviews-count">({product.reviewsCount})</span>
                   </div>
 
-                  {/* Price & Color Swatches */}
-                  <div className="product-price-swatch-row">
-                    <p className="product-price">{formatPrice(product.priceUSD, product.priceRWF)}</p>
-                    
-                    {product.colors && (
-                      <div className="color-swatches-row">
-                        {product.colors.map((color, i) => (
-                          <span 
-                            key={i} 
-                            className="color-swatch-dot" 
-                            style={{ backgroundColor: color }}
-                            title="Available color"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {/* Price */}
+                  <p className="product-price">{formatPrice(product.priceUSD, product.priceRWF)}</p>
 
                 </div>
               </div>
