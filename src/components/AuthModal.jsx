@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, CheckCircle } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -314,10 +314,6 @@ const AuthModal = ({ isOpen, onClose }) => {
           </form>
         )}
 
-        <div className="auth-footer">
-          <ShieldCheck size={14} />
-          <span>Secured by Supabase</span>
-        </div>
       </div>
     </div>
   );
