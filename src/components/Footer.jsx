@@ -21,7 +21,7 @@ const Footer = ({ showToast }) => {
   return (
     <footer className="footer">
       <div className="container">
-        
+
         {/* Top Newsletter Banner in Footer */}
         <div className="footer-newsletter-banner">
           <div className="newsletter-text-content">
@@ -31,13 +31,13 @@ const Footer = ({ showToast }) => {
           </div>
 
           <form className="newsletter-form-inline" onSubmit={handleSubscribe}>
-            <input 
-              type="email" 
-              placeholder="Enter your email address..." 
-              className="newsletter-input-inline" 
+            <input
+              type="email"
+              placeholder="Enter your email address..."
+              className="newsletter-input-inline"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required 
+              required
               aria-label="Email for newsletter"
             />
             <button type="submit" className="btn btn-gold flex items-center gap-1">
@@ -48,7 +48,7 @@ const Footer = ({ showToast }) => {
 
         {/* Footer Navigation Columns Grid */}
         <div className="footer-grid">
-          
+
           <div className="footer-col brand-col">
             <div className="logo-brand-wrap" style={{ marginBottom: '16px' }}>
               <span className="logo-title" style={{ color: '#ffffff' }}>AIMEE</span>
@@ -63,7 +63,7 @@ const Footer = ({ showToast }) => {
               <p><Mail size={14} className="gold-icon" /> concierge@aimeecollection.rw</p>
             </div>
           </div>
-          
+
           <div className="footer-col">
             <h4 className="footer-heading">Shop Collections</h4>
             <ul className="footer-links">
@@ -74,13 +74,12 @@ const Footer = ({ showToast }) => {
               <li><Link to="/accessories" className="footer-link">Jewelry & Accessories</Link></li>
             </ul>
           </div>
-          
+
           <div className="footer-col">
             <h4 className="footer-heading">Client Concierge</h4>
             <ul className="footer-links">
               <li><a href="#" className="footer-link" onClick={handleComingSoon('Delivery to Kigali (2-4 hrs) & Worldwide Shipping (2-4 days)')}>Delivery & Express Shipping</a></li>
               <li><a href="#" className="footer-link" onClick={handleComingSoon('14-day return policy for unused items in original dustbag')}>Returns & Exchanges</a></li>
-              <li><a href="#" className="footer-link" onClick={handleComingSoon('Bespoke fitting appointment at our Kigali atelier')}>Atelier Fitting Appointments</a></li>
               <li><a href="#" className="footer-link" onClick={handleComingSoon('Size guide for UK, US, EU fashion standards')}>Sizing & Fit Advice</a></li>
               <li><a href="#" className="footer-link" onClick={handleComingSoon('Contact via WhatsApp: +250 788 123 456')}>Contact Concierge</a></li>
             </ul>
@@ -89,7 +88,7 @@ const Footer = ({ showToast }) => {
           <div className="footer-col">
             <h4 className="footer-heading">Follow & Connect</h4>
             <p className="footer-description">
-              Follow our runway shows and behind-the-scenes fitting sessions.
+              Follow our social media accounts for updates and promotions.
             </p>
             <div className="social-links-flex">
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="social-icon-btn" aria-label="Instagram">
@@ -105,25 +104,24 @@ const Footer = ({ showToast }) => {
                 <span>T</span>
               </a>
             </div>
-            
+
             <div className="trust-badge-footer">
               <ShieldCheck size={18} className="gold-icon" />
-              <span>100% Guaranteed Authentic Haute Couture</span>
+              <span>100% Guaranteed Authentic</span>
             </div>
           </div>
 
         </div>
-        
+
         {/* Bottom Bar: Copyright & Payment Icons */}
         <div className="footer-bottom-flex">
-          <p>&copy; {new Date().getFullYear()} Aimee Collection. All rights reserved. Designed for Haute Couture Excellence.</p>
-          
+          <p>&copy; {new Date().getFullYear()} Aimee Collection. All rights reserved. Designed by Braze Inc.</p>
+
           <div className="payment-badges-flex">
             <span className="payment-badge">MTN Mobile Money</span>
             <span className="payment-badge">Airtel Money</span>
             <span className="payment-badge">VISA</span>
             <span className="payment-badge">Mastercard</span>
-            <span className="payment-badge">Apple Pay</span>
           </div>
         </div>
 
