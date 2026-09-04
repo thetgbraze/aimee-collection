@@ -286,10 +286,10 @@ img {
 .header {
   position: sticky;
   top: 0;
-  background-color: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-color);
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid rgba(229, 227, 221, 0.75);
   z-index: 100;
   padding: 14px 0;
   transition: var(--transition);
@@ -3777,6 +3777,11 @@ img {
 @media (max-width: 991px) {
   .header {
     padding: 8px 0;
+    background-color: rgba(255, 255, 255, 0.74);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(229, 227, 221, 0.65);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   }
 
   .header-container {
