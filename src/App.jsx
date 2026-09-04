@@ -314,6 +314,9 @@ function AppContent() {
               <AdminDashboard />
             </ProtectedAdminRoute>
           } />
+
+          {/* Reset password redirect route */}
+          <Route path="/reset-password" element={<Navigate to="/" replace />} />
         </Routes>
 
         <Footer showToast={showToast} />

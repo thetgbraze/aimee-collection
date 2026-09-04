@@ -20,10 +20,11 @@ const strengthLabel = ['Weak', 'Fair', 'Good', 'Strong'];
 const strengthColor = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
 
 const AuthModal = ({ isOpen, onClose }) => {
-  const { signIn, signUp, resetPassword } = useAuth();
-  const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot'
+  const { signIn, signUp, resetPassword, updateUserPassword, isPasswordRecovery, setIsPasswordRecovery } = useAuth();
+  const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot' | 'recovery'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,11 +32,21 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const pwdStrength = mode === 'signup' ? getPasswordStrength(password) : -1;
+  // Automatically open modal in recovery mode when arriving from forgot-password link
+  React.useEffect(() => {
+    if (isPasswordRecovery) {
+      setMode('recovery');
+      setError('');
+      setSuccess('');
+    }
+  }, [isPasswordRecovery]);
+
+  const pwdStrength = (mode === 'signup' || mode === 'recovery') ? getPasswordStrength(password) : -1;
 
   const resetForm = () => {
     setEmail('');
     setPassword('');
+    setConfirmPassword('');
     setFirstName('');
     setLastName('');
     setError('');
@@ -50,6 +61,9 @@ const AuthModal = ({ isOpen, onClose }) => {
 
   const handleClose = () => {
     resetForm();
+    if (isPasswordRecovery && setIsPasswordRecovery) {
+      setIsPasswordRecovery(false);
+    }
     setMode('login');
     onClose();
   };
@@ -109,7 +123,31 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match. Please re-enter.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await updateUserPassword(password);
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccess('Your password has been successfully updated! You are now logged in.');
+      setTimeout(() => {
+        handleClose();
+      }, 1800);
+    }
+  };
+
+  if (!isOpen && !isPasswordRecovery) return null;
 
   return createPortal(
     <div className="auth-modal-overlay" onClick={handleClose} role="dialog" aria-modal="true" aria-label="Sign in">
@@ -128,11 +166,13 @@ const AuthModal = ({ isOpen, onClose }) => {
             {mode === 'login' && 'Welcome Back'}
             {mode === 'signup' && 'Create Account'}
             {mode === 'forgot' && 'Reset Password'}
+            {mode === 'recovery' && 'Set New Password'}
           </h2>
           <p className="auth-modal-subtitle">
             {mode === 'login' && 'Sign in to your account'}
             {mode === 'signup' && 'Join the Aimee Collection community'}
             {mode === 'forgot' && 'Enter your email to receive a reset link'}
+            {mode === 'recovery' && 'Please choose a strong new password for your account'}
           </p>
         </div>
 
@@ -320,6 +360,78 @@ const AuthModal = ({ isOpen, onClose }) => {
             <div className="auth-switch">
               Remember your password?{' '}
               <button type="button" onClick={() => switchMode('login')}>Sign in</button>
+            </div>
+          </form>
+        )}
+
+        {/* Set New Password Form (Arrived from Recovery Link) */}
+        {mode === 'recovery' && (
+          <form className="auth-form" onSubmit={handleUpdatePassword}>
+            <div className="auth-input-group">
+              <Lock size={18} className="auth-input-icon" />
+              <input
+                id="recovery-new-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder={`New password (min. ${MIN_PASSWORD_LENGTH} chars)`}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                autoComplete="new-password"
+                aria-label="New password"
+                aria-describedby="pwd-strength-recovery"
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            <div className="auth-input-group">
+              <Lock size={18} className="auth-input-icon" />
+              <input
+                id="recovery-confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                autoComplete="new-password"
+                aria-label="Confirm new password"
+              />
+            </div>
+
+            {/* Password strength indicator */}
+            {password.length > 0 && (
+              <div id="pwd-strength-recovery" className="pwd-strength-wrap" aria-label={`Password strength: ${strengthLabel[pwdStrength]}`}>
+                <div className="pwd-strength-bar">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="pwd-strength-segment"
+                      style={{
+                        background: i <= pwdStrength ? strengthColor[pwdStrength] : 'var(--border-color)',
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="pwd-strength-label" style={{ color: strengthColor[pwdStrength] }}>
+                  {strengthLabel[pwdStrength]}
+                </span>
+              </div>
+            )}
+
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
+              {loading ? <Loader2 size={20} className="spin" /> : <>Save New Password <ArrowRight size={18} /></>}
+            </button>
+            <div className="auth-switch">
+              Need help?{' '}
+              <button type="button" onClick={() => switchMode('login')}>Return to sign in</button>
             </div>
           </form>
         )}

@@ -6,10 +6,11 @@ import {
   Loader2, RefreshCw, Shield, Store, AlertCircle,
   Plus, Trash2, Edit3, X, Check, Search, Filter,
   Eye, CheckCircle2, UserPlus, Info, Tag, DollarSign,
-  ChevronRight, ExternalLink, Megaphone
+  ChevronRight, ExternalLink, Megaphone, Mail, Send
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, createIsolatedClient } from '../lib/supabase';
+import { sendOrderConfirmationEmail } from '../services/emailService';
 
 // ─── Stats Card ────────────────────────────
 const StatCard = ({ icon: Icon, label, value, subtitle, color }) => (
@@ -91,6 +92,7 @@ const AdminDashboard = () => {
   const [productModalTab, setProductModalTab] = useState('details'); // 'details' | 'variants'
   const [deletingProduct, setDeletingProduct] = useState(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
   const [viewingOrder, setViewingOrder] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
   const [loadingOrderItems, setLoadingOrderItems] = useState(false);
@@ -961,10 +963,17 @@ const AdminDashboard = () => {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-              <div className="admin-toolbar-right">
+              <div className="admin-toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
                 </span>
+                <button
+                  className="admin-btn admin-btn-primary admin-btn-sm"
+                  onClick={() => setIsAddOrderOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Plus size={15} /> Create Order
+                </button>
               </div>
             </div>
 
@@ -1409,6 +1418,20 @@ const AdminDashboard = () => {
         />
       )}
 
+      {/* ════════════════ CREATE / ADD ORDER MODAL ════════════════ */}
+      {isAddOrderOpen && (
+        <AddOrderModal
+          products={stats.products}
+          onClose={() => setIsAddOrderOpen(false)}
+          onSuccess={async (createdEmail) => {
+            setIsAddOrderOpen(false);
+            showToast(`Order created and confirmation email sent to ${createdEmail || 'customer'}!`);
+            await fetchDashboardData();
+          }}
+          showToast={showToast}
+        />
+      )}
+
       {/* ════════════════ VIEW ORDER DETAILS MODAL ════════════════ */}
       {viewingOrder && (
         <OrderDetailsModal
@@ -1417,6 +1440,7 @@ const AdminDashboard = () => {
           loading={loadingOrderItems}
           onClose={() => setViewingOrder(null)}
           onStatusChange={handleUpdateOrderStatus}
+          showToast={showToast}
         />
       )}
 
@@ -2490,7 +2514,43 @@ const AddUserModal = ({ onClose, onSuccess, showToast }) => {
 };
 
 // ─── Sub-Component: View Order Details Modal ───────────────────────
-const OrderDetailsModal = ({ order, items, loading, onClose, onStatusChange }) => {
+const OrderDetailsModal = ({ order, items, loading, onClose, onStatusChange, showToast }) => {
+  const [resending, setResending] = useState(false);
+  const customerEmail = order.customer_email || order.shipping_address?.email;
+
+  const handleResendEmail = async () => {
+    if (!customerEmail) {
+      if (showToast) showToast('No customer email recorded for this order.', 'error');
+      return;
+    }
+    setResending(true);
+    try {
+      await sendOrderConfirmationEmail({
+        orderId: order.id,
+        orderRef: `AIMEE-${order.id.slice(0, 8).toUpperCase()}`,
+        customerName: order.customer_name || order.shipping_address?.full_name || 'Customer',
+        customerEmail,
+        customerPhone: order.customer_phone || order.shipping_address?.phone,
+        deliveryAddress: order.delivery_address || `${order.shipping_address?.street || ''}, ${order.shipping_address?.city || ''}`,
+        paymentMethod: order.payment_method || 'cash_on_delivery',
+        items: items.map(i => ({
+          title: i.product_title,
+          size: i.product_variants?.attributes?.size,
+          quantity: i.quantity,
+          unit_price_usd: i.price_at_purchase_usd,
+          unit_price_rwf: i.price_at_purchase_rwf,
+        })),
+        totalUSD: order.total_usd,
+        totalRWF: order.total_rwf,
+      });
+      if (showToast) showToast(`Confirmation email resent to ${customerEmail}!`);
+    } catch (err) {
+      if (showToast) showToast('Failed to resend confirmation email.', 'error');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <div className="admin-modal-overlay" onClick={onClose}>
       <div className="admin-modal wide" onClick={(e) => e.stopPropagation()}>
@@ -2547,18 +2607,30 @@ const OrderDetailsModal = ({ order, items, loading, onClose, onStatusChange }) =
               </div>
             </div>
 
-            {/* Shipping Address */}
-            {order.shipping_address && (
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
-                <span className="admin-label">Delivery Destination</span>
+            {/* Customer & Shipping Details */}
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #eee', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <span className="admin-label">Customer Contact</span>
                 <p style={{ margin: '4px 0 0', fontSize: '0.85rem' }}>
-                  <strong>{order.shipping_address?.full_name}</strong> • {order.shipping_address?.phone || 'No phone'}
+                  <strong>{order.customer_name || order.shipping_address?.full_name || 'Customer'}</strong>
                 </p>
                 <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  {order.shipping_address?.street}, {order.shipping_address?.city}, {order.shipping_address?.country || 'Rwanda'}
+                  📧 {customerEmail || 'No email recorded'}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  📞 {order.customer_phone || order.shipping_address?.phone || 'No phone'}
                 </p>
               </div>
-            )}
+              <div>
+                <span className="admin-label">Delivery Destination</span>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  {order.delivery_address || (order.shipping_address ? `${order.shipping_address.street || ''}, ${order.shipping_address.city || ''}, ${order.shipping_address.country || 'Rwanda'}` : 'Direct')}
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Payment: <strong>{(order.payment_method || 'cash_on_delivery').replace(/_/g, ' ').toUpperCase()}</strong>
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Items List */}
@@ -2613,11 +2685,459 @@ const OrderDetailsModal = ({ order, items, loading, onClose, onStatusChange }) =
           )}
         </div>
 
-        <div className="admin-modal-footer">
+        <div className="admin-modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {customerEmail ? (
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary admin-btn-sm"
+              onClick={handleResendEmail}
+              disabled={resending}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              {resending ? <Loader2 size={14} className="spin" /> : <Mail size={14} />}
+              {resending ? 'Sending…' : 'Resend Confirmation Email'}
+            </button>
+          ) : <div />}
           <button className="admin-btn admin-btn-secondary" onClick={onClose}>
             Close
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Sub-Component: Create / Add Order Modal ────────────────────────
+const AddOrderModal = ({ products = [], onClose, onSuccess, showToast }) => {
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('Kigali');
+  const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
+  const [status, setStatus] = useState('pending');
+  const [notes, setNotes] = useState('');
+  const [sendEmail, setSendEmail] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Line items
+  const [items, setItems] = useState([
+    {
+      productId: products[0]?.id || '',
+      title: products[0]?.title || 'Signature Couture Piece',
+      size: 'Medium',
+      quantity: 1,
+      priceUSD: Number(products[0]?.price_usd || 180),
+      priceRWF: Number(products[0]?.price_rwf || 234000),
+    }
+  ]);
+
+  const handleProductSelect = (index, prodId) => {
+    const found = products.find(p => p.id === prodId);
+    if (!found) return;
+    setItems(prev => prev.map((item, idx) => idx === index ? {
+      ...item,
+      productId: prodId,
+      title: found.title,
+      priceUSD: Number(found.price_usd || 0),
+      priceRWF: Number(found.price_rwf || 0),
+    } : item));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    setItems(prev => prev.map((item, idx) => idx === index ? {
+      ...item,
+      [field]: field === 'quantity' ? Math.max(1, parseInt(value) || 1) : value
+    } : item));
+  };
+
+  const handleAddItem = () => {
+    setItems(prev => [
+      ...prev,
+      {
+        productId: products[0]?.id || '',
+        title: products[0]?.title || 'Additional Couture Piece',
+        size: 'Medium',
+        quantity: 1,
+        priceUSD: Number(products[0]?.price_usd || 100),
+        priceRWF: Number(products[0]?.price_rwf || 130000),
+      }
+    ]);
+  };
+
+  const handleRemoveItem = (index) => {
+    if (items.length <= 1) return;
+    setItems(prev => prev.filter((_, idx) => idx !== index));
+  };
+
+  const totalUSD = useMemo(() => items.reduce((sum, i) => sum + (Number(i.priceUSD) * Number(i.quantity)), 0), [items]);
+  const totalRWF = useMemo(() => items.reduce((sum, i) => sum + (Number(i.priceRWF) * Number(i.quantity)), 0), [items]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!customerEmail.trim()) {
+      showToast('Customer email is required so confirmation can be delivered.', 'error');
+      return;
+    }
+    if (items.length === 0 || !items.some(i => i.title.trim())) {
+      showToast('Please add at least one line item to the order.', 'error');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const orderPayload = {
+        customer_name: customerName.trim() || 'Client',
+        customer_email: customerEmail.trim(),
+        customer_phone: customerPhone.trim(),
+        delivery_address: `${street.trim() ? street.trim() + ', ' : ''}${city.trim()}`,
+        payment_method: paymentMethod,
+        shipping_address: {
+          full_name: customerName.trim() || 'Client',
+          email: customerEmail.trim(),
+          phone: customerPhone.trim(),
+          street: street.trim(),
+          city: city.trim(),
+          country: 'Rwanda',
+        },
+        subtotal_usd: totalUSD,
+        subtotal_rwf: totalRWF,
+        discount_percent: 0,
+        total_usd: totalUSD,
+        total_rwf: totalRWF,
+        status,
+        notes: notes.trim() || null,
+      };
+
+      const { data: rpcRes, error: orderErr } = await supabase.rpc('place_order', {
+        order_data: orderPayload,
+        items_data: items.map(item => ({
+          title: item.title,
+          size: item.size,
+          quantity: item.quantity,
+          unit_price_usd: item.priceUSD,
+          unit_price_rwf: item.priceRWF,
+        })),
+      });
+
+      if (orderErr) throw orderErr;
+      const createdOrderId = rpcRes?.id;
+      const computedRef = rpcRes?.order_ref || `AIMEE-${createdOrderId?.slice(0, 8).toUpperCase()}`;
+
+      // Send confirmation email
+      if (sendEmail) {
+        await sendOrderConfirmationEmail({
+          orderId: createdOrderId,
+          orderRef: computedRef,
+          customerName: customerName.trim() || 'Client',
+          customerEmail: customerEmail.trim(),
+          customerPhone: customerPhone.trim(),
+          deliveryAddress: `${street.trim() ? street.trim() + ', ' : ''}${city.trim()}`,
+          paymentMethod,
+          items: items.map(i => ({
+            title: i.title,
+            size: i.size,
+            quantity: i.quantity,
+            unit_price_usd: i.priceUSD,
+            unit_price_rwf: i.priceRWF,
+          })),
+          subtotalUSD: totalUSD,
+          subtotalRWF: totalRWF,
+          discountPercent: 0,
+          totalUSD,
+          totalRWF,
+          notes: notes.trim(),
+        });
+      }
+
+      onSuccess(customerEmail.trim());
+    } catch (err) {
+      console.error('[AdminDashboard] Create order error:', err);
+      showToast(err.message || 'Failed to create order.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="admin-modal-overlay" onClick={onClose}>
+      <div className="admin-modal wide" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <h3 className="admin-modal-title">
+            <Plus size={20} style={{ color: 'var(--accent-gold)' }} />
+            Create Customer Order
+          </h3>
+          <button className="admin-modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="admin-modal-form">
+          <div className="admin-modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+            
+            {/* Customer Details */}
+            <div style={{ marginBottom: '20px' }}>
+              <span className="admin-label" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-gold)' }}>
+                1. Customer & Contact Details
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '8px' }}>
+                <div className="admin-input-group">
+                  <label className="admin-label">Full Name</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. Marie Claire"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                  />
+                </div>
+                <div className="admin-input-group">
+                  <label className="admin-label">Customer Email *</label>
+                  <input
+                    type="email"
+                    className="admin-input"
+                    placeholder="client@example.com"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="admin-input-group">
+                  <label className="admin-label">Phone / WhatsApp</label>
+                  <input
+                    type="tel"
+                    className="admin-input"
+                    placeholder="+250 788 000 000"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery & Payment */}
+            <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
+              <span className="admin-label" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-gold)' }}>
+                2. Shipping & Payment Options
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '8px' }}>
+                <div className="admin-input-group">
+                  <label className="admin-label">Delivery Street Address</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="KG 9 Ave, Nyarutarama"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                  />
+                </div>
+                <div className="admin-input-group">
+                  <label className="admin-label">City</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="Kigali"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                </div>
+                <div className="admin-input-group">
+                  <label className="admin-label">Payment Method</label>
+                  <select
+                    className="admin-input"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    <option value="cash_on_delivery">Cash on Delivery</option>
+                    <option value="mobile_money">Mobile Money (MTN / Airtel)</option>
+                    <option value="card_payment">Card Payment (Visa / Master)</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                  </select>
+                </div>
+                <div className="admin-input-group">
+                  <label className="admin-label">Initial Status</label>
+                  <select
+                    className="admin-input"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Line Items */}
+            <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span className="admin-label" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-gold)' }}>
+                  3. Order Items ({items.length})
+                </span>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary admin-btn-sm"
+                  onClick={handleAddItem}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Plus size={13} /> Add Piece
+                </button>
+              </div>
+
+              {items.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                    gap: '8px',
+                    alignItems: 'center',
+                    background: '#fcfcfc',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    marginBottom: '8px',
+                    border: '1px solid #eee'
+                  }}
+                >
+                  <div>
+                    {products.length > 0 && (
+                      <select
+                        className="admin-input"
+                        style={{ fontSize: '0.8rem', padding: '6px', marginBottom: '4px' }}
+                        value={item.productId}
+                        onChange={(e) => handleProductSelect(idx, e.target.value)}
+                      >
+                        <option value="">-- Choose from Catalog --</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>{p.title} (${p.price_usd})</option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      type="text"
+                      className="admin-input"
+                      style={{ fontSize: '0.82rem', padding: '6px' }}
+                      placeholder="Item Title"
+                      value={item.title}
+                      onChange={(e) => handleItemChange(idx, 'title', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      style={{ fontSize: '0.82rem', padding: '6px' }}
+                      placeholder="Size / Color"
+                      value={item.size}
+                      onChange={(e) => handleItemChange(idx, 'size', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <input
+                      type="number"
+                      min="1"
+                      className="admin-input"
+                      style={{ fontSize: '0.82rem', padding: '6px' }}
+                      placeholder="Qty"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="admin-input"
+                      style={{ fontSize: '0.82rem', padding: '6px' }}
+                      placeholder="USD Price"
+                      value={item.priceUSD}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        handleItemChange(idx, 'priceUSD', val);
+                        handleItemChange(idx, 'priceRWF', Math.round(val * 1300));
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-danger admin-btn-sm"
+                      onClick={() => handleRemoveItem(idx)}
+                      disabled={items.length <= 1}
+                      style={{ padding: '6px 8px' }}
+                      title="Remove item"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Totals Summary */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <div style={{ background: '#f5f5f5', padding: '12px 20px', borderRadius: '8px', textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>Calculated Total:</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-gold)' }}>
+                    ${totalUSD.toFixed(2)}
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                      (RWF {totalRWF.toLocaleString()})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Email dispatch option & Notes */}
+            <div style={{ paddingTop: '12px', borderTop: '1px solid #eee' }}>
+              <div className="admin-input-group" style={{ marginBottom: '12px' }}>
+                <label className="admin-label">Internal Order Notes</label>
+                <textarea
+                  className="admin-input"
+                  rows={2}
+                  placeholder="Special concierge requests, delivery directions…"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem' }}>
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--accent-gold)' }}
+                />
+                <span style={{ fontWeight: 600 }}>
+                  ✉️ Automatically send confirmation email to customer ({customerEmail || 'customer email'})
+                </span>
+              </label>
+            </div>
+
+          </div>
+
+          <div className="admin-modal-footer">
+            <button type="button" className="admin-btn admin-btn-secondary" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="admin-btn admin-btn-primary"
+              disabled={saving}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              {saving ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
+              {saving ? 'Creating & Sending…' : 'Create Order'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

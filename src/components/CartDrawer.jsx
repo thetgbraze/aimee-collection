@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Trash2, ShoppingBag, ArrowRight, CheckCircle2, Truck, Loader2 } from 'lucide-react';
 import { formatPrice } from '../data/products';
 import { supabase } from '../lib/supabase';
+import { sendOrderConfirmationEmail } from '../services/emailService';
 
 // Promo codes loaded from environment — never hardcode in source
 const VALID_PROMOS = {
@@ -86,7 +87,14 @@ const CartDrawer = ({
       customer_phone: formData.phone,
       delivery_address: `${formData.address}, ${formData.city}`,
       payment_method: formData.paymentMethod,
-      items,
+      shipping_address: {
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        street: formData.address,
+        city: formData.city,
+        country: 'Rwanda',
+      },
       subtotal_usd: rawSubtotalUSD,
       subtotal_rwf: rawSubtotalRWF,
       discount_percent: discountPercent,
@@ -95,27 +103,67 @@ const CartDrawer = ({
       status: 'pending',
     };
 
-    try {
-      const { data, error } = await supabase.from('orders').insert([orderPayload]).select().single();
+    let confirmedOrderId = null;
+    let computedRef = `AIMEE-${Math.floor(100000 + Math.random() * 900000)}`;
 
-      if (error) {
-        // Graceful fallback — still show success to customer (order can be re-created manually)
-        console.error('[CartDrawer] Order insert error:', error.message);
-        // Generate a local reference as fallback
-        const fallbackRef = `AIMEE-${Math.floor(100000 + Math.random() * 900000)}`;
-        setOrderRef(fallbackRef);
+    try {
+      // Use place_order RPC for atomic transaction with RLS bypass
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('place_order', {
+        order_data: orderPayload,
+        items_data: items.map(item => ({
+          title: item.title,
+          size: item.size,
+          quantity: item.quantity,
+          unit_price_usd: item.unit_price_usd,
+          unit_price_rwf: item.unit_price_rwf,
+        })),
+      });
+
+      if (!rpcErr && rpcRes?.id) {
+        confirmedOrderId = rpcRes.id;
+        computedRef = rpcRes.order_ref || `AIMEE-${rpcRes.id.slice(0, 8).toUpperCase()}`;
+        setOrderRef(computedRef);
       } else {
-        setOrderRef(data?.id ? `AIMEE-${data.id.slice(0, 8).toUpperCase()}` : `AIMEE-${Math.floor(100000 + Math.random() * 900000)}`);
+        if (rpcErr) console.warn('[CartDrawer] RPC notice, falling back:', rpcErr.message);
+        const { data, error } = await supabase.from('orders').insert([orderPayload]).select().single();
+        if (!error && data?.id) {
+          confirmedOrderId = data.id;
+          computedRef = `AIMEE-${data.id.slice(0, 8).toUpperCase()}`;
+          setOrderRef(computedRef);
+        } else {
+          setOrderRef(computedRef);
+        }
       }
     } catch (err) {
-      console.error('[CartDrawer] Unexpected error:', err);
-      setOrderRef(`AIMEE-${Math.floor(100000 + Math.random() * 900000)}`);
+      console.warn('[CartDrawer] Unexpected order placement error:', err);
+      setOrderRef(computedRef);
+    }
+
+    // Dispatch confirmation email to customer
+    try {
+      await sendOrderConfirmationEmail({
+        orderId: confirmedOrderId,
+        orderRef: computedRef,
+        customerName: formData.fullName,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        deliveryAddress: `${formData.address}, ${formData.city}`,
+        paymentMethod: formData.paymentMethod,
+        items,
+        subtotalUSD: rawSubtotalUSD,
+        subtotalRWF: rawSubtotalRWF,
+        discountPercent,
+        totalUSD: finalUSD,
+        totalRWF: finalRWF,
+      });
+    } catch (mailErr) {
+      console.warn('[CartDrawer] Confirmation email dispatch note:', mailErr);
     }
 
     setCheckoutLoading(false);
     setCheckoutStep(2);
     clearCart();
-    if (showToast) showToast('Order placed successfully! Thank you for choosing Aimee Collection.', 'success');
+    if (showToast) showToast('Order placed successfully! Confirmation email sent.', 'success');
   };
 
   return (

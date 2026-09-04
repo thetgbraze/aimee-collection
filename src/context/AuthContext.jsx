@@ -28,6 +28,8 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
   // Fetch profile from public.profiles — guards against unmounted component updates
   const fetchProfile = async (userId) => {
     const { data, error } = await supabase
@@ -47,6 +49,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
+    // Detect recovery token in URL hash
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+      setIsPasswordRecovery(true);
+    }
+
     const initSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!isMounted) return;
@@ -61,8 +68,13 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         if (!isMounted) return;
+
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true);
+        }
+
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -120,12 +132,29 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     if (!email) return { data: null, error: { message: 'Please enter your email address.' } };
+    // Use the exact same domain origin as signup for consistent Supabase redirect whitelist matching
     const redirectUrl = typeof window !== 'undefined' && window.location.origin
-      ? `${window.location.origin}/reset-password`
-      : 'https://aimee-collection.vercel.app/reset-password';
+      ? window.location.origin
+      : 'https://aimee-collection.vercel.app';
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
+    return { data, error: error ? { ...error, message: normalizeAuthError(error) } : null };
+  };
+
+  const updateUserPassword = async (newPassword) => {
+    if (!newPassword || newPassword.length < 8) {
+      return { data: null, error: { message: 'Password must be at least 8 characters long.' } };
+    }
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (!error) {
+      setIsPasswordRecovery(false);
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
     return { data, error: error ? { ...error, message: normalizeAuthError(error) } : null };
   };
 
@@ -142,6 +171,9 @@ export const AuthProvider = ({ children }) => {
       signIn,
       signOut,
       resetPassword,
+      updateUserPassword,
+      isPasswordRecovery,
+      setIsPasswordRecovery,
       fetchProfile,
       isAdmin,
       isStoreManager,
