@@ -53,8 +53,13 @@ const ProductGrid = ({
   }, [handleGlobalTap]);
 
   const handleImageTap = (e, productId) => {
-    // Only activate tap-to-reveal behaviour on touch-capable devices
-    if (window.matchMedia('(hover: none)').matches) {
+    // Activate tap-to-reveal behaviour on touch-capable devices and mobile viewports
+    const isTouch = 
+      window.matchMedia('(hover: none)').matches || 
+      window.matchMedia('(pointer: coarse)').matches || 
+      window.innerWidth <= 768;
+
+    if (isTouch) {
       e.stopPropagation();
       setTouchedProductId(prev => prev === productId ? null : productId);
     }

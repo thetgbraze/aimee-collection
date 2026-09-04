@@ -68,8 +68,13 @@ const BestSellersSlider = ({
   }, [handleGlobalTap]);
 
   const handleImageTap = (e, productId) => {
-    // Only activate on touch-only devices (no hover capability)
-    if (window.matchMedia('(hover: none)').matches) {
+    // Activate on touch-capable devices and mobile viewports
+    const isTouch = 
+      window.matchMedia('(hover: none)').matches || 
+      window.matchMedia('(pointer: coarse)').matches || 
+      window.innerWidth <= 768;
+
+    if (isTouch) {
       e.stopPropagation();
       setIsPaused(true); // Pause the auto-scroll while user is exploring
       setTouchedProductId(prev => prev === productId ? null : productId);
