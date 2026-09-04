@@ -25,13 +25,13 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
 
   if (!isOpen) return null;
 
-  const filteredResults = query.trim() === '' 
-    ? [] 
-    : products.filter(p => 
-        p.title.toLowerCase().includes(query.toLowerCase()) || 
-        p.category.toLowerCase().includes(query.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(query.toLowerCase()))
-      );
+  const filteredResults = query.trim() === ''
+    ? []
+    : products.filter(p =>
+      p.title.toLowerCase().includes(query.toLowerCase()) ||
+      p.category.toLowerCase().includes(query.toLowerCase()) ||
+      (p.description && p.description.toLowerCase().includes(query.toLowerCase()))
+    );
 
   const handleChooseItem = (product) => {
     onSelectProduct(product);
@@ -41,14 +41,14 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
   return (
     <div className="search-modal-overlay" onClick={onClose}>
       <div className="search-modal-container" onClick={(e) => e.stopPropagation()}>
-        
+
         <div className="search-modal-header">
           <div className="search-input-wrapper">
             <Search size={22} className="search-icon" />
-            <input 
+            <input
               ref={inputRef}
-              type="text" 
-              placeholder="Search by product, category, style, or material..." 
+              type="text"
+              placeholder="Search by product, category, style, or material..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="search-modal-input"
@@ -70,8 +70,8 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
               <h4>POPULAR SEARCHES</h4>
               <div className="popular-tags-flex">
                 {popularSearches.map(tag => (
-                  <button 
-                    key={tag} 
+                  <button
+                    key={tag}
                     className="popular-tag-btn"
                     onClick={() => setQuery(tag)}
                   >
@@ -93,8 +93,8 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
               ) : (
                 <div className="search-results-grid">
                   {filteredResults.map((product) => (
-                    <div 
-                      key={product.id} 
+                    <div
+                      key={product.id}
                       className="search-result-card"
                       onClick={() => handleChooseItem(product)}
                       title={`Click to view and choose ${product.title}`}
@@ -104,8 +104,8 @@ const SearchModal = ({ isOpen, onClose, onSelectProduct, currency }) => {
                         <span className="search-result-cat">{product.category}</span>
                         <h4 className="search-result-title">{product.title}</h4>
                         <p className="search-result-price">{formatPrice(product.priceUSD, product.priceRWF, currency)}</p>
-                        
-                        <button 
+
+                        <button
                           className="btn btn-gold-sm flex items-center gap-1"
                           style={{ marginTop: '8px', fontSize: '0.7rem', padding: '4px 10px' }}
                           onClick={(e) => {

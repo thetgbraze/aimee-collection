@@ -17,3 +17,18 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+/**
+ * Creates an isolated Supabase client without persisting sessions to localStorage/cookies.
+ * Used for administrative actions like creating new user accounts without terminating
+ * or overwriting the currently logged-in administrator's session.
+ */
+export const createIsolatedClient = () => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+};

@@ -3,13 +3,13 @@ import { products, formatPrice } from '../data/products';
 import QuickViewModal from './QuickViewModal';
 import { ChevronLeft, ChevronRight, Heart, Eye, Star, ShoppingBag } from 'lucide-react';
 
-const BestSellersSlider = ({ 
-  currency, 
-  showToast, 
-  category, 
-  wishlistIds = [], 
+const BestSellersSlider = ({
+  currency,
+  showToast,
+  category,
+  wishlistIds = [],
   toggleWishlist,
-  addToCart 
+  addToCart
 }) => {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -94,8 +94,8 @@ const BestSellersSlider = ({
           </button>
         </div>
       </div>
-      
-      <div 
+
+      <div
         className="best-sellers-slider"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => { setIsPaused(false); setTouchedProductId(null); }}
@@ -114,8 +114,8 @@ const BestSellersSlider = ({
                     onClick={(e) => handleImageTap(e, product.id)}
                   >
                     <span className="product-badge bestseller">BESTSELLER</span>
-                    
-                    <button 
+
+                    <button
                       className={`wishlist-heart-btn ${isWishlisted ? 'active' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -137,7 +137,7 @@ const BestSellersSlider = ({
                     </div>
 
                     <div className="product-actions">
-                      <button 
+                      <button
                         className="btn btn-quick-view flex items-center gap-1"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -147,7 +147,7 @@ const BestSellersSlider = ({
                       >
                         <Eye size={16} /> QUICK VIEW
                       </button>
-                      <button 
+                      <button
                         className="btn-add-cart-icon"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -181,10 +181,10 @@ const BestSellersSlider = ({
       </div>
 
       {quickViewProduct && (
-        <QuickViewModal 
-          product={quickViewProduct} 
-          currency={currency} 
-          formatPrice={(usd, rwf) => formatPrice(usd, rwf, currency)} 
+        <QuickViewModal
+          product={quickViewProduct}
+          currency={currency}
+          formatPrice={(usd, rwf) => formatPrice(usd, rwf, currency)}
           onClose={() => setQuickViewProduct(null)}
           showToast={showToast}
           addToCart={addToCart}

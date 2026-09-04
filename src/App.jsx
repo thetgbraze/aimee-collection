@@ -32,7 +32,7 @@ const Toast = ({ message, type, visible }) => (
 
 // Luxury Sub-page Header Banner
 const SubpageBanner = ({ title, category, description, bgImage }) => (
-  <div 
+  <div
     className="subpage-banner"
     style={{ backgroundImage: `linear-gradient(rgba(13,13,13,0.7), rgba(13,13,13,0.85)), url(${bgImage})` }}
   >
@@ -47,34 +47,34 @@ const SubpageBanner = ({ title, category, description, bgImage }) => (
 );
 
 // Subpage view wrapper
-const CategoryPage = ({ 
-  title, 
-  category, 
-  description, 
-  bgImage, 
-  currency, 
-  showToast, 
-  wishlistIds, 
-  toggleWishlist, 
-  addToCart 
+const CategoryPage = ({
+  title,
+  category,
+  description,
+  bgImage,
+  currency,
+  showToast,
+  wishlistIds,
+  toggleWishlist,
+  addToCart
 }) => (
   <div className="category-page">
     <SubpageBanner title={title} category={category} description={description} bgImage={bgImage} />
-    <BestSellersSlider 
-      currency={currency} 
-      showToast={showToast} 
-      category={category} 
-      wishlistIds={wishlistIds} 
-      toggleWishlist={toggleWishlist} 
-      addToCart={addToCart} 
+    <BestSellersSlider
+      currency={currency}
+      showToast={showToast}
+      category={category}
+      wishlistIds={wishlistIds}
+      toggleWishlist={toggleWishlist}
+      addToCart={addToCart}
     />
-    <ProductGrid 
-      currency={currency} 
-      initialCategory={category} 
-      showToast={showToast} 
-      wishlistIds={wishlistIds} 
-      toggleWishlist={toggleWishlist} 
-      addToCart={addToCart} 
+    <ProductGrid
+      currency={currency}
+      initialCategory={category}
+      showToast={showToast}
+      wishlistIds={wishlistIds}
+      toggleWishlist={toggleWishlist}
+      addToCart={addToCart}
     />
   </div>
 );
@@ -203,10 +203,10 @@ function AppContent() {
     <BrowserRouter>
       <div className="app">
         <AnnouncementBar />
-        
-        <Navbar 
-          currency={currency} 
-          setCurrency={setCurrency} 
+
+        <Navbar
+          currency={currency}
+          setCurrency={setCurrency}
           cartCount={cartCount}
           wishlistCount={wishlistItems.length}
           onOpenCart={() => setIsCartOpen(true)}
@@ -220,92 +220,92 @@ function AppContent() {
             <>
               <Hero />
               <CategoryBanners />
-              <BestSellersSlider 
-                currency={currency} 
-                showToast={showToast} 
-                wishlistIds={wishlistIds} 
-                toggleWishlist={toggleWishlist} 
-                addToCart={addToCart} 
+              <BestSellersSlider
+                currency={currency}
+                showToast={showToast}
+                wishlistIds={wishlistIds}
+                toggleWishlist={toggleWishlist}
+                addToCart={addToCart}
               />
-              <ProductGrid 
-                currency={currency} 
-                showToast={showToast} 
-                wishlistIds={wishlistIds} 
-                toggleWishlist={toggleWishlist} 
-                addToCart={addToCart} 
+              <ProductGrid
+                currency={currency}
+                showToast={showToast}
+                wishlistIds={wishlistIds}
+                toggleWishlist={toggleWishlist}
+                addToCart={addToCart}
               />
               <BrandStory />
               <Testimonials />
             </>
           } />
-          
+
           <Route path="/new-arrivals" element={
-            <CategoryPage 
-              title="New Season Arrivals" 
-              category="All" 
+            <CategoryPage
+              title="New Season Arrivals"
+              category="All"
               description="Discover the newest haute couture drops, fresh runway silhouettes, and limited edition releases."
               bgImage="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80"
-              currency={currency} 
-              showToast={showToast} 
-              wishlistIds={wishlistIds} 
-              toggleWishlist={toggleWishlist} 
-              addToCart={addToCart} 
+              currency={currency}
+              showToast={showToast}
+              wishlistIds={wishlistIds}
+              toggleWishlist={toggleWishlist}
+              addToCart={addToCart}
             />
           } />
 
           <Route path="/clothing" element={
-            <CategoryPage 
-              title="Clothing Collection" 
-              category="Clothing" 
+            <CategoryPage
+              title="Clothing Collection"
+              category="Clothing"
               description="Architectural blazers, silk wrap dresses, and sculpting jumpers tailored for uncompromised authority."
               bgImage="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&q=80"
-              currency={currency} 
-              showToast={showToast} 
-              wishlistIds={wishlistIds} 
-              toggleWishlist={toggleWishlist} 
-              addToCart={addToCart} 
+              currency={currency}
+              showToast={showToast}
+              wishlistIds={wishlistIds}
+              toggleWishlist={toggleWishlist}
+              addToCart={addToCart}
             />
           } />
 
           <Route path="/shoes" element={
-            <CategoryPage 
-              title="Signature Footwear" 
-              category="Shoes" 
+            <CategoryPage
+              title="Signature Footwear"
+              category="Shoes"
               description="Pointed stiletto heels, comfortable block mules, and Italian suede boots handcrafted with precision."
               bgImage="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=1600&q=80"
-              currency={currency} 
-              showToast={showToast} 
-              wishlistIds={wishlistIds} 
-              toggleWishlist={toggleWishlist} 
-              addToCart={addToCart} 
+              currency={currency}
+              showToast={showToast}
+              wishlistIds={wishlistIds}
+              toggleWishlist={toggleWishlist}
+              addToCart={addToCart}
             />
           } />
 
           <Route path="/bags" element={
-            <CategoryPage 
-              title="Luxury Italian Leather Bags" 
-              category="Bags" 
+            <CategoryPage
+              title="Luxury Italian Leather Bags"
+              category="Bags"
               description="Full-grain leather totes, quilted evening chain bags, and structured satchels with polished gold hardware."
               bgImage="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=1600&q=80"
-              currency={currency} 
-              showToast={showToast} 
-              wishlistIds={wishlistIds} 
-              toggleWishlist={toggleWishlist} 
-              addToCart={addToCart} 
+              currency={currency}
+              showToast={showToast}
+              wishlistIds={wishlistIds}
+              toggleWishlist={toggleWishlist}
+              addToCart={addToCart}
             />
           } />
 
           <Route path="/accessories" element={
-            <CategoryPage 
-              title="High Jewelry & Accessories" 
-              category="Accessories" 
+            <CategoryPage
+              title="High Jewelry & Accessories"
+              category="Accessories"
               description="18k gold vermeil layered necklaces, diamond solitaire studs, silk twill scarves, and cat-eye eyewear."
               bgImage="https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=1600&q=80"
-              currency={currency} 
-              showToast={showToast} 
-              wishlistIds={wishlistIds} 
-              toggleWishlist={toggleWishlist} 
-              addToCart={addToCart} 
+              currency={currency}
+              showToast={showToast}
+              wishlistIds={wishlistIds}
+              toggleWishlist={toggleWishlist}
+              addToCart={addToCart}
             />
           } />
 
@@ -319,8 +319,8 @@ function AppContent() {
         <Footer showToast={showToast} />
 
         {/* Global Drawers & Modals */}
-        <CartDrawer 
-          isOpen={isCartOpen} 
+        <CartDrawer
+          isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
           cartItems={cartItems}
           updateQuantity={updateQuantity}
@@ -330,8 +330,8 @@ function AppContent() {
           showToast={showToast}
         />
 
-        <WishlistDrawer 
-          isOpen={isWishlistOpen} 
+        <WishlistDrawer
+          isOpen={isWishlistOpen}
           onClose={() => setIsWishlistOpen(false)}
           wishlistItems={wishlistItems}
           removeFromWishlist={removeFromWishlist}
@@ -340,18 +340,18 @@ function AppContent() {
           showToast={showToast}
         />
 
-        <SearchModal 
-          isOpen={isSearchOpen} 
+        <SearchModal
+          isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
           onSelectProduct={(prod) => setSelectedSearchProduct(prod)}
           currency={currency}
         />
 
         {selectedSearchProduct && (
-          <QuickViewModal 
-            product={selectedSearchProduct} 
-            currency={currency} 
-            formatPrice={(usd, rwf) => formatPrice(usd, rwf, currency)} 
+          <QuickViewModal
+            product={selectedSearchProduct}
+            currency={currency}
+            formatPrice={(usd, rwf) => formatPrice(usd, rwf, currency)}
             onClose={() => setSelectedSearchProduct(null)}
             showToast={showToast}
             addToCart={addToCart}

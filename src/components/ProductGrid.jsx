@@ -13,13 +13,13 @@ const categoryRoutes = {
 };
 const categories = Object.keys(categoryRoutes);
 
-const ProductGrid = ({ 
-  currency, 
-  initialCategory, 
-  showToast, 
-  wishlistIds = [], 
+const ProductGrid = ({
+  currency,
+  initialCategory,
+  showToast,
+  wishlistIds = [],
   toggleWishlist,
-  addToCart 
+  addToCart
 }) => {
   const [activeCategory, setActiveCategory] = useState(initialCategory || "All");
   const location = useLocation();
@@ -61,8 +61,8 @@ const ProductGrid = ({
   };
 
   // Filter products by category
-  let filtered = activeCategory === "All" 
-    ? [...products] 
+  let filtered = activeCategory === "All"
+    ? [...products]
     : products.filter(p => p.category === activeCategory);
 
   // Sort products
@@ -84,12 +84,12 @@ const ProductGrid = ({
           <h2 className="section-title">New Arrivals &amp; Collection</h2>
           <div className="section-divider"></div>
         </div>
-        
+
         {/* Controls: Category Tabs & Sort Dropdown */}
         <div className="grid-controls-flex">
           <div className="category-tabs">
             {categories.map((cat) => (
-              <Link 
+              <Link
                 key={cat}
                 to={categoryRoutes[cat]}
                 className={`category-tab ${activeCategory === cat ? 'active' : ''}`}
@@ -101,8 +101,8 @@ const ProductGrid = ({
 
           <div className="sort-selector-box">
             <label htmlFor="sort-select" className="sort-label">Sort By:</label>
-            <select 
-              id="sort-select" 
+            <select
+              id="sort-select"
               className="sort-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -137,7 +137,7 @@ const ProductGrid = ({
                   )}
 
                   {/* Wishlist Heart Toggle */}
-                  <button 
+                  <button
                     className={`wishlist-heart-btn ${isWishlisted ? 'active' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -149,18 +149,18 @@ const ProductGrid = ({
                   </button>
 
                   {/* Dual Image Hover */}
-                  <img 
-                    src={product.image} 
-                    alt={product.title} 
-                    className="product-image primary" 
-                    loading="lazy" 
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    className="product-image primary"
+                    loading="lazy"
                   />
                   {product.secondaryImage && (
-                    <img 
-                      src={product.secondaryImage} 
-                      alt={`${product.title} lifestyle view`} 
-                      className="product-image secondary" 
-                      loading="lazy" 
+                    <img
+                      src={product.secondaryImage}
+                      alt={`${product.title} lifestyle view`}
+                      className="product-image secondary"
+                      loading="lazy"
                     />
                   )}
 
@@ -171,7 +171,7 @@ const ProductGrid = ({
 
                   {/* Action Bar — hover on desktop, tap-revealed on mobile */}
                   <div className="product-actions">
-                    <button 
+                    <button
                       className="btn btn-quick-view flex items-center gap-1"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -181,7 +181,7 @@ const ProductGrid = ({
                     >
                       <Eye size={16} /> QUICK VIEW
                     </button>
-                    <button 
+                    <button
                       className="btn-add-cart-icon"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -224,10 +224,10 @@ const ProductGrid = ({
       </section>
 
       {quickViewProduct && (
-        <QuickViewModal 
-          product={quickViewProduct} 
-          currency={currency} 
-          formatPrice={formatPrice} 
+        <QuickViewModal
+          product={quickViewProduct}
+          currency={currency}
+          formatPrice={formatPrice}
           onClose={() => setQuickViewProduct(null)}
           showToast={showToast}
           addToCart={addToCart}
