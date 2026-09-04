@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ShoppingBag, Search, Menu, X, Heart, ChevronLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
@@ -45,14 +46,15 @@ const Navbar = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMobileMenuOpen]);
 
-  // Prevent body scroll when menu is open
+  // Prevent background scrolling on touch devices while preserving position:sticky
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
+    if (!isMobileMenuOpen) return;
+    const preventBackgroundTouch = (e) => {
+      if (navRef.current && navRef.current.contains(e.target)) return;
+      e.preventDefault();
+    };
+    document.addEventListener('touchmove', preventBackgroundTouch, { passive: false });
+    return () => document.removeEventListener('touchmove', preventBackgroundTouch);
   }, [isMobileMenuOpen]);
 
   // Touch gesture handlers for sliding drawer away
@@ -91,7 +93,8 @@ const Navbar = ({
     : undefined;
 
   return (
-    <header className="header">
+    <>
+      <header className="header">
       <div className="container header-container flex items-center justify-between">
         
         {/* Left Side: Mobile Menu Button & Desktop Navigation */}
@@ -180,79 +183,86 @@ const Navbar = ({
         </div>
 
       </div>
-
-      {/* Mobile Drawer (with Swipe-to-Dismiss) */}
-      <nav
-        id="mobile-nav"
-        ref={navRef}
-        className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}
-        style={dynamicDrawerStyle}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        aria-label="Mobile navigation"
-      >
-        {/* Drawer Top Bar with Close & Swipe Hint */}
-        <div className="mobile-nav-topbar">
-          <div className="mobile-nav-brand">
-            <span className="logo-title">AIMEE</span>
-            <span className="logo-sub">COLLECTION</span>
-          </div>
-          <button 
-            className="mobile-nav-close-icon"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Close navigation"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        <div className="mobile-nav-swipe-indicator">
-          <ChevronLeft size={14} className="swipe-chevron" />
-          <span>Slide left to close</span>
-        </div>
-
-        {/* Navigation Links */}
-        <div className="mobile-nav-items">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.path}
-              to={link.path} 
-              className={`mobile-nav-item-link ${location.pathname === link.path ? 'active' : ''}`} 
-              onClick={() => setIsMobileMenuOpen(false)}
-              aria-current={location.pathname === link.path ? 'page' : undefined}
-            >
-              <span>{link.name}</span>
-            </Link>
-          ))}
-        </div>
-
-        {/* Currency selector in mobile nav drawer */}
-        <div className="mobile-nav-currency">
-          <span className="mobile-nav-currency-label">Currency</span>
-          <select
-            className="currency-select"
-            value={currency}
-            onChange={(e) => { setCurrency(e.target.value); setIsMobileMenuOpen(false); }}
-            aria-label="Select Currency"
-          >
-            <option value="USD">USD ($)</option>
-            <option value="RWF">RWF (FRw)</option>
-          </select>
-        </div>
-      </nav>
-
-      {/* Mobile nav backdrop — swipe or tap to dismiss */}
-      {isMobileMenuOpen && (
-        <div
-          className="mobile-nav-backdrop"
-          onClick={() => setIsMobileMenuOpen(false)}
-          onTouchStart={() => setIsMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
     </header>
-  );
+
+    {/* Mobile Drawer & Backdrop portaled directly to body so position:fixed is always relative to viewport */}
+    {createPortal(
+      <>
+        <nav
+          id="mobile-nav"
+          ref={navRef}
+          className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}
+          style={dynamicDrawerStyle}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          aria-label="Mobile navigation"
+        >
+          {/* Drawer Top Bar with Close & Swipe Hint */}
+          <div className="mobile-nav-topbar">
+            <div className="mobile-nav-brand">
+              <span className="logo-title">AIMEE</span>
+              <span className="logo-sub">COLLECTION</span>
+            </div>
+            <button 
+              className="mobile-nav-close-icon"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close navigation"
+            >
+              <X size={22} />
+            </button>
+          </div>
+
+          <div className="mobile-nav-swipe-indicator">
+            <ChevronLeft size={14} className="swipe-chevron" />
+            <span>Slide left to close</span>
+          </div>
+
+          {/* Navigation Links */}
+          <div className="mobile-nav-items">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.path}
+                to={link.path} 
+                className={`mobile-nav-item-link ${location.pathname === link.path ? 'active' : ''}`} 
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-current={location.pathname === link.path ? 'page' : undefined}
+              >
+                <span>{link.name}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Currency selector in mobile nav drawer */}
+          <div className="mobile-nav-currency">
+            <span className="mobile-nav-currency-label">Currency</span>
+            <select
+              className="currency-select"
+              value={currency}
+              onChange={(e) => { setCurrency(e.target.value); setIsMobileMenuOpen(false); }}
+              aria-label="Select Currency"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="RWF">RWF (FRw)</option>
+            </select>
+          </div>
+        </nav>
+
+        {/* Mobile nav backdrop — swipe or tap to dismiss */}
+        {isMobileMenuOpen && (
+          <div
+            className="mobile-nav-backdrop"
+            onClick={() => setIsMobileMenuOpen(false)}
+            onTouchStart={() => setIsMobileMenuOpen(false)}
+            onTouchMove={(e) => e.preventDefault()}
+            aria-hidden="true"
+          />
+        )}
+      </>,
+      document.body
+    )}
+  </>
+);
 };
 
 export default Navbar;

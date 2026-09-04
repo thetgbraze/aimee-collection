@@ -4785,19 +4785,21 @@ img {
 /* ─── AUTH MODAL ──────────────────────────────────────── */
 @media (max-width: 480px) {
   .auth-modal-overlay {
-    padding: 0;
-    align-items: flex-end;
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
   }
 
   .auth-modal {
-    border-radius: 20px 20px 0 0;
-    padding: 28px 18px max(24px, env(safe-area-inset-bottom, 24px));
-    max-height: 92dvh;
+    border-radius: 20px;
+    padding: 28px 20px 24px;
+    max-height: 90dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    width: 100vw;
-    max-width: 100vw;
-    margin: 0;
+    width: min(100%, 400px);
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   }
 
   .auth-name-row {
@@ -4820,8 +4822,14 @@ img {
 }
 
 @media (max-width: 350px) {
+  .auth-modal-overlay {
+    padding: 10px;
+  }
+
   .auth-modal {
-    padding: 22px 14px max(20px, env(safe-area-inset-bottom, 20px));
+    padding: 22px 14px 18px;
+    border-radius: 16px;
+    width: 100%;
   }
 
   .auth-modal-logo .logo-title {
