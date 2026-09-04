@@ -83,10 +83,15 @@ export const AuthProvider = ({ children }) => {
     if (!email || !password) return { data: null, error: { message: 'Email and password are required.' } };
     if (password.length < 8) return { data: null, error: { message: 'Password must be at least 8 characters long.' } };
 
+    const redirectUrl = typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : 'https://aimee-collection.vercel.app';
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           first_name: firstName,
           last_name: lastName,
@@ -115,8 +120,11 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     if (!email) return { data: null, error: { message: 'Please enter your email address.' } };
+    const redirectUrl = typeof window !== 'undefined' && window.location.origin
+      ? `${window.location.origin}/reset-password`
+      : 'https://aimee-collection.vercel.app/reset-password';
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     });
     return { data, error: error ? { ...error, message: normalizeAuthError(error) } : null };
   };

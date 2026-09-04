@@ -2349,6 +2349,7 @@ const AddUserModal = ({ onClose, onSuccess, showToast }) => {
         email: email.trim(),
         password: password,
         options: {
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://aimee-collection.vercel.app',
           data: {
             first_name: firstName.trim(),
             last_name: lastName.trim(),

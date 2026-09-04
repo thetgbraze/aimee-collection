@@ -77,13 +77,22 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, firstName, lastName);
-    setLoading(false);
+    const { data, error } = await signUp(email, password, firstName, lastName);
     if (error) {
+      setLoading(false);
       setError(error.message);
+      return;
+    }
+
+    // Attempt instant login so user is not blocked by email confirmation delays
+    const loginRes = await signIn(email, password);
+    setLoading(false);
+
+    if (!loginRes.error) {
+      handleClose();
     } else {
-      setSuccess('Account created! Please check your email to verify, then sign in.');
-      setTimeout(() => switchMode('login'), 3000);
+      setSuccess('Account created successfully! You can now sign in.');
+      setTimeout(() => switchMode('login'), 1800);
     }
   };
 
